@@ -1,0 +1,1382 @@
+[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ vi runs/Dec12.py 
+[?2004l[?1049h[22;0;0t[>4;2m[?1h=[?2004h[?1004h[1;74r[?12h[?12l[22;2t[22;1t[27m[29m[m[H[2J[?25l[74;1H"runs/Dec12.py" 2833L, 136292B[2;1H▽[6n[2;1H  [3;1HPzz\[0%m[6n[3;1H           [1;1H[>c]10;?]11;?[1;5H[34m# tdates = get_dates([(D(1979, 1, 23), D(2019, 12, 28)), (D(2021, 2, 1), D(2022, 7, 1))])[m
+    tdates = get_dates([(D([31m1979[m, [31m1[m, [31m23[m), D([31m2019[m, [31m12[m, [31m28[m)), (D([31m2021[m, [31m2[m, [31m1[m), D([31m2024[m, [31m5[m, [31m1[m))])[2;92H[K[3;1H    extra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m][3;111H[K[4;5Hextra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m]
+    extra_all = extra_in_out + extra_out_only
+    imesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    omesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    timesteps = [[31m6[m, [31m24[m, [31m36[m]
+    data = NeoWeatherDataset(NeoDataConfig(inputs=[imesh], outputs=[omesh],[10;44Htimesteps=timesteps, max_ram_manual=[36mint[m([31m8e9[m),[11;44Hmax_instance_queue_size=[31m6[m,[12;44Hworker_complain = [36mFalse[m,[13;44Hrequested_dates = tdates[14;44H))
+    model = ForecastStep3D([16;9HForecastStepConfig([17;13Hdata.config.inputs,[18;13Houtputs=data.config.outputs,[19;13Hsincos=[36mTrue[m,[20;13Hpadded_lon=[36mTrue[m,[21;13HTransformer=SlideLayer3D,[22;13Hcheckpointfn=matepoint.checkpoint,[23;13Hpatch_size=([31m5[m,[31m8[m,[31m8[m),[24;13Hhidden_dim=[31m1536[m, [34m#1408, [m[25;13Henc_swin_depth=[31m6[m,[26;13Hdec_swin_depth=[31m6[m,[27;13Hproc_swin_depth=[31m6[m,[28;13Htimesteps=timesteps,[29;13Hdims_per_head=[31m32[m,[30;13Hprocessor_dt=[31m3[m,[31;13Houtput_deltas=[36mFalse[m,[32;13Hdecoder_reinput_initial=[36mFalse[m,[33;13Hneorad=[36mTrue[m,[34;9Hwindow_size=([31m3[m,[31m5[m,[31m7[m)))[36;5Hconfig.HALF = [36mTrue[m
+    config.ignore_train_safegaurd = [36mTrue[m
+    config.validate_every = -[31m1[m
+    config.DH = [31m24[m
+    config.validate_N = [31m8[m
+    config.log_every = [31m25[m
+    config.save_every = [31m100[m
+    config.optim = [31m'shampoo'[m
+    config.shampoo.dim = [31m2048[m
+    [34m#config.optim = 'adam'[m
+    config.reset_optimizer = [36mFalse[m
+    config.lr_sched = SimpleNamespace()
+    config.lr_sched.cosine_en = [36mTrue[m
+    config.lr_sched.cosine_period = 45_000
+    config.lr_sched.cosine_bottom = [31m5e-8[m
+    config.lr_sched.warmup_end_step = [31m1000[m
+    config.lr_sched.div_factor= [31m4[m
+    config.lr_sched.restart_warmup_end_step = [31m100[m
+    [34m# Scaling by sqrt(3) now that we're using [m
+    config.lr_sched.lr = [31m0.3e-3[m
+    config.adam = SimpleNamespace()
+    config.adam.betas = ([31m0.9[m, [31m0.99[m)
+    config.adam.weight_decay = [31m0.001[m
+    config.lr_sched.step_offset = [31m0[m
+    config.loss_consts = {[31m48[m: [31m0.3[m, [31m24[m: [31m1.0[m, [31m6[m: [31m1.0[m, [31m3[m: [31m1.0[m, [31m36[m: [31m0.25[m}
+    config.dates = tdates
+    w = WeatherTrainer(conf=config,model=model,data=data)
+    w.run()
+
+[34m#@launch(ddp=0)[m
+[35m@[m[36mlaunch[m(nodes={[31m'bimini'[m: [31m4[m},port=[31m29505[m, start_method=[31m"spawn"[m)[34m#, zulip=True, ping='@**John Dean**',validate=False,kill_nvidia=True)[m
+[38;5;130mdef[m [36mSep4_s2s_cluelessyolo[m():
+    [34m#config.gpus = '0-2'
+[m    [34m#config.resume = "_"+config.activity.replace("_","-")+"_"[m
+    config.nope = [36mTrue[m
+    tdates = get_dates([(D([31m1979[m, [31m1[m, [31m23[m), D([31m2019[m, [31m12[m, [31m28[m)), (D([31m2021[m, [31m2[m, [31m1[m), D([31m2024[m, [31m5[m, [31m1[m))])
+    extra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m]
+    extra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m][74;255H86,24[10C0%[68;24H[?25h[?25l[74;245H~@k[68;24H[74;245H   [67;24H[74;256H5[67;24H[?25h[?25l[74;245H~@k[67;24H[74;245H   [66;24H[74;256H4[66;24H[?25h[?25l[74;245H~@k[66;24H[74;245H   [66;25H[74;259H5[66;25H[?25h[?25l[74;245H~@k[66;25H[74;245H   [66;26H[74;259H6[66;26H[?25h[?25l[74;245H~@k[66;26H[74;245H   [66;27H[66;15H[106m{[11C}[m[74;259H7[66;27H[?25h[?25l[74;245Ha[66;27H[74;245H [66;28H[74;1H[1m-- INSERT --[m[74;13H[K[74;255H84,28[10C0%[66;28H[?25h[?25l[74;259H7[66;27H[?25h[?25l}[106m,[mport=[31m29505[m, start_method=[31m"spawn"[m)[34m#, zulip=True, ping='@**John Dean**',validate=False,kill_nvidia=True)[m[66;130H[K[66;26H[106m}[m,[74;259H6[66;26H[?25h[?25l[31m[106m5[m},port=[31m29505[m, start_method=[31m"spawn"[m)[34m#, zulip=True, ping='@**John Dean**',validate=False,kill_nvidia=True)[m[66;26H[31m5[m[106m}[m[74;259H7[66;27H[?25h[74;1H[K[66;26H[?25l[74;245H^[[66;26H[74;245H  [66;27H[66;15H{[11C}[74;255H84,26[10C0%[66;26H[?25h[?25l[74;245H:[66;26H[74;245H[K[74;1H:[?25hwq[?25l[?2004l[>4;m"runs/Dec12.py" 2833L, 136292B written[23;2t[23;1t
+[?1004l[?2004l[?1l>[?25h[>4;m[?1049l[23;0;0t[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ vi runs/Dec12.py [9Pgit pushll --rebasecommit -m 'fixing data integrity, excluding bimini gpu 4 etc' .[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cstatus[Kdiff utils.pytrain.pydataloader.py.py[K.py.py[K[6Pstatustusvi runs/launch.py [4Pcd /fast/djohnvi runs/launch.py [4Pscreen -r s2s[C[2Pvi utils.py[C[5@_lite[C[C[C[C[5P[C[C[C[C[4Pgit diffstatuspython3 runs/Dec12.py Sep4_s2s_cluelessyolo[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[26Pvi runs/Dec12.py python3 runs/Dec12.py Sep4_s2s_cluelessyolo
+[?2004l^CTraceback (most recent call last):
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/decorators.py", line 296, in _allow_in_graph_einops
+    from einops._torch_specific import (  # type: ignore[attr-defined]  # noqa: F401
+ImportError: cannot import name '_ops_were_registered_in_torchdynamo' from 'einops._torch_specific' (/home/windborne/.local/lib/python3.10/site-packages/einops/_torch_specific.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fast/djohn/runs/Dec12.py", line 1, in <module>
+    from launch import *
+  File "/fast/djohn/runs/launch.py", line 14, in <module>
+    from evals.live_validation import run_validation
+  File "/fast/djohn/evals/live_validation.py", line 4, in <module>
+    from evals.package_neo import load_weights
+  File "/fast/djohn/evals/package_neo.py", line 8, in <module>
+    from model_latlon_3d import *
+  File "/fast/djohn/model_latlon_3d.py", line 13, in <module>
+    from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+  File "/home/windborne/.local/lib/python3.10/site-packages/timm/__init__.py", line 2, in <module>
+    from .layers import is_scriptable, is_exportable, set_scriptable, set_exportable
+  File "/home/windborne/.local/lib/python3.10/site-packages/timm/layers/__init__.py", line 7, in <module>
+    from .classifier import ClassifierHead, create_classifier, NormMlpClassifierHead
+  File "/home/windborne/.local/lib/python3.10/site-packages/timm/layers/classifier.py", line 15, in <module>
+    from .create_norm import get_norm_layer
+  File "/home/windborne/.local/lib/python3.10/site-packages/timm/layers/create_norm.py", line 14, in <module>
+    from torchvision.ops.misc import FrozenBatchNorm2d
+  File "/home/windborne/.local/lib/python3.10/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision import _meta_registrations, datasets, io, models, ops, transforms, utils
+  File "/home/windborne/.local/lib/python3.10/site-packages/torchvision/models/__init__.py", line 2, in <module>
+    from .convnext import *
+  File "/home/windborne/.local/lib/python3.10/site-packages/torchvision/models/convnext.py", line 8, in <module>
+    from ..ops.misc import Conv2dNormActivation, Permute
+  File "/home/windborne/.local/lib/python3.10/site-packages/torchvision/ops/__init__.py", line 23, in <module>
+    from .poolers import MultiScaleRoIAlign
+  File "/home/windborne/.local/lib/python3.10/site-packages/torchvision/ops/poolers.py", line 10, in <module>
+    from .roi_align import roi_align
+  File "/home/windborne/.local/lib/python3.10/site-packages/torchvision/ops/roi_align.py", line 4, in <module>
+    import torch._dynamo
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/__init__.py", line 2, in <module>
+    from . import convert_frame, eval_frame, resume_execution
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/convert_frame.py", line 61, in <module>
+    from .output_graph import OutputGraph
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/output_graph.py", line 89, in <module>
+    from .variables.builder import GraphArg, TrackedFake, VariableBuilder, wrap_fx_proxy
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/variables/builder.py", line 142, in <module>
+    from .optimizer import OptimizerVariable
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/variables/optimizer.py", line 5, in <module>
+    from ..decorators import mark_static_address
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/decorators.py", line 316, in <module>
+    trace_rules.add_module_init_func("einops", _allow_in_graph_einops)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/trace_rules.py", line 2939, in add_module_init_func
+    init_func()
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/decorators.py", line 304, in _allow_in_graph_einops
+    allow_in_graph(einops.rearrange)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/decorators.py", line 94, in allow_in_graph
+    if trace_rules.lookup(fn) != variables.TorchInGraphFunctionVariable:
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/trace_rules.py", line 3011, in lookup
+    rule = get_torch_obj_rule_map().get(obj, None)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/trace_rules.py", line 2753, in get_torch_obj_rule_map
+    obj = load_object(k)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/trace_rules.py", line 2778, in load_object
+    obj = _load_obj_from_str(x[0])
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/_dynamo/trace_rules.py", line 2766, in _load_obj_from_str
+    return getattr(importlib.import_module(module), obj_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/_tensor/__init__.py", line 6, in <module>
+    import torch.distributed._tensor.ops
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/_tensor/ops/__init__.py", line 6, in <module>
+    from .pointwise_ops import *  # noqa: F403
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 975, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_data
+KeyboardInterrupt
+
+[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ ^C[?2004l[?2004h[?2004l
+[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ python3 runs/Dec12.py Sep4_s2s_cluelessyolo[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[26Pvi runs/Dec12.py 
+[?2004l[?1049h[22;0;0t[>4;2m[?1h=[?2004h[?1004h[1;74r[?12h[?12l[22;2t[22;1t[27m[29m[m[H[2J[?25l[74;1H"runs/Dec12.py" 2833L, 136292B[2;1H▽[6n[2;1H  [3;1HPzz\[0%m[6n[3;1H           [1;1H[>c]10;?]11;?[1;5Hconfig.disregard_buffer_checksum = [36mFalse[m[34m#True[m
+    [34m#config.nope = True[m[2;24H[K[3;1H    [34m# tdates = get_dates([(D(1979, 1, 23), D(2019, 12, 28)), (D(2021, 2, 1), D(2022, 7, 1))])[m[3;94H[K[4;5Htdates = get_dates([(D([31m1979[m, [31m1[m, [31m23[m), D([31m2019[m, [31m12[m, [31m28[m)), (D([31m2021[m, [31m2[m, [31m1[m), D([31m2024[m, [31m5[m, [31m1[m))])
+    extra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m]
+    extra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m]
+    extra_all = extra_in_out + extra_out_only
+    imesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    omesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    timesteps = [[31m6[m, [31m24[m, [31m36[m]
+    data = NeoWeatherDataset(NeoDataConfig(inputs=[imesh], outputs=[omesh],[12;44Htimesteps=timesteps, max_ram_manual=[36mint[m([31m8e9[m),[13;44Hmax_instance_queue_size=[31m6[m,[14;44Hworker_complain = [36mFalse[m,[15;44Hrequested_dates = tdates[16;44H))
+    model = ForecastStep3D([18;9HForecastStepConfig([19;13Hdata.config.inputs,[20;13Houtputs=data.config.outputs,[21;13Hsincos=[36mTrue[m,[22;13Hpadded_lon=[36mTrue[m,[23;13HTransformer=SlideLayer3D,[24;13Hcheckpointfn=matepoint.checkpoint,[25;13Hpatch_size=([31m5[m,[31m8[m,[31m8[m),[26;13Hhidden_dim=[31m1536[m, [34m#1408, [m[27;13Henc_swin_depth=[31m6[m,[28;13Hdec_swin_depth=[31m6[m,[29;13Hproc_swin_depth=[31m6[m,[30;13Htimesteps=timesteps,[31;13Hdims_per_head=[31m32[m,[32;13Hprocessor_dt=[31m3[m,[33;13Houtput_deltas=[36mFalse[m,[34;13Hdecoder_reinput_initial=[36mFalse[m,[35;13Hneorad=[36mTrue[m,[36;9Hwindow_size=([31m3[m,[31m5[m,[31m7[m)))[38;5Hconfig.HALF = [36mTrue[m
+    config.ignore_train_safegaurd = [36mTrue[m
+    config.validate_every = -[31m1[m
+    config.DH = [31m24[m
+    config.validate_N = [31m8[m
+    config.log_every = [31m25[m
+    config.save_every = [31m100[m
+    config.optim = [31m'shampoo'[m
+    config.shampoo.dim = [31m2048[m
+    [34m#config.optim = 'adam'[m
+    config.reset_optimizer = [36mFalse[m
+    config.lr_sched = SimpleNamespace()
+    config.lr_sched.cosine_en = [36mTrue[m
+    config.lr_sched.cosine_period = 45_000
+    config.lr_sched.cosine_bottom = [31m5e-8[m
+    config.lr_sched.warmup_end_step = [31m1000[m
+    config.lr_sched.div_factor= [31m4[m
+    config.lr_sched.restart_warmup_end_step = [31m100[m
+    [34m# Scaling by sqrt(3) now that we're using [m
+    config.lr_sched.lr = [31m0.3e-3[m
+    config.adam = SimpleNamespace()
+    config.adam.betas = ([31m0.9[m, [31m0.99[m)
+    config.adam.weight_decay = [31m0.001[m
+    config.lr_sched.step_offset = [31m0[m
+    config.loss_consts = {[31m48[m: [31m0.3[m, [31m24[m: [31m1.0[m, [31m6[m: [31m1.0[m, [31m3[m: [31m1.0[m, [31m36[m: [31m0.25[m}
+    config.dates = tdates
+    w = WeatherTrainer(conf=config,model=model,data=data)
+    w.run()
+
+[34m#@launch(ddp=0)[m
+[35m@[m[36mlaunch[m(nodes={[31m'bimini'[m: [31m5[m},port=[31m29505[m, start_method=[31m"spawn"[m)[34m#, zulip=True, ping='@**John Dean**',validate=False,kill_nvidia=True)[m
+[38;5;130mdef[m [36mSep4_s2s_cluelessyolo[m():
+    [34m#config.gpus = '0-2'
+[m    [34m#config.resume = "_"+config.activity.replace("_","-")+"_"[m
+    config.nope = [36mTrue[m
+    tdates = get_dates([(D([31m1979[m, [31m1[m, [31m23[m), D([31m2019[m, [31m12[m, [31m28[m)), (D([31m2021[m, [31m2[m, [31m1[m), D([31m2024[m, [31m5[m, [31m1[m))])[74;255H84,26[10C0%[68;26H[?25h[?25l[74;245H~@k[68;26H[74;245H   [68;26H[1;73r[73;1H
+[1;74r[68;26H[106m()[m[73;5Hextra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m][74;1H[K[74;255H85,26[10C0%[68;26H[?25h[?25l[74;245H~@k[68;26H[74;245H   [68;24H[1;73r[73;1H
+[1;74r[67;26H()[73;5Hextra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m][74;255H[K[74;255H86,24[10C0%[68;24H[?25h[?25l[74;245Ha[68;24H[74;245H [68;25H[74;1H[1m-- INSERT --[m[74;255H[K[74;255H86,25[10C0%[68;25H[?25h[?25l[1;73r[73;1H
+[1;74r[73;5Hextra_all = extra_in_out + extra_out_only[74;255H[K[74;255H87,25[10C0%[68;25H[?25h[74;1H[K[68;24H[?25l[74;245H^[[68;24H[74;245H  [68;25H[74;255H87,24[10C0%[68;24H[?25h[?25l[74;245H~@k[68;24H[74;245H   [68;22H[1;73r[73;1H
+[1;74r[73;5Himesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)[74;255H[K[74;255H88,22[10C0%[68;22H[?25h[?25l[74;245H_[68;22H[74;245H [68;5H[74;258H5 [68;5H[?25h[?25l[74;245Ha[68;5H[74;245H [68;6H[74;1H[1m-- INSERT --[m[74;255H[K[74;255H88,6[11C0%[68;6H[?25h[?25l[74;258H5[68;5H[?25h[?25l[34m#config.nope = True[m[74;258H6[68;6H[?25h[74;1H[K[?25l[74;255H88,5[11C0%[68;5H[?25h[?25l[74;245H:[68;5H[74;245H[K[74;1H:[?25hwq[?25l[?2004l[>4;m"runs/Dec12.py" 2833L, 136293B written[23;2t[23;1t
+[?1004l[?2004l[?1l>[?25h[>4;m[?1049l[23;0;0t[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ vi runs/Dec12.py [Kvi runs/Dec12.py python3 runs/Dec12.py Sep4_s2s_cluelessyolo
+[?2004lnnodes 1
+Logging to /fast/runlogs/Sep4_s2s_cluelessyolo.Sep10_152254
+export CUDA_VISIBLE_DEVICES=0,1,2,3,5; echo clearing caches; echo sswa | sudo -S bash -c 'echo 1 > /proc/sys/vm/drop_caches'; echo page cache cleared;  export OMP_NUM_THREADS=2 ; export NCCL_IB_HCA=mlx5_0; export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True;fuser /dev/nvidia* 2>/dev/null | tr ' ' '\n' | grep -v '^276111$' | xargs -r kill;rm -f /dev/shm/*;torchrun --nnodes=1 --nproc_per_node=5 --rdzv_id=29505 --rdzv_backend=c10d --rdzv_endpoint=bimini:29505 /fast/djohn/runs/Dec12.py Sep4_s2s_cluelessyolo | tee -a /fast/runlogs/Sep4_s2s_cluelessyolo.Sep10_152254/bimini.log
+[91mLaunching on host bimini[0m
+export CUDA_VISIBLE_DEVICES=0,1,2,3,5; echo clearing caches; echo sswa | sudo -S bash -c 'echo 1 > /proc/sys/vm/drop_caches'; echo page cache cleared;  export OMP_NUM_THREADS=2 ; export NCCL_IB_HCA=mlx5_0; export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True;fuser /dev/nvidia* 2>/dev/null | tr ' ' '\n' | grep -v '^276111$' | xargs -r kill;rm -f /dev/shm/*;torchrun --nnodes=1 --nproc_per_node=5 --rdzv_id=29505 --rdzv_backend=c10d --rdzv_endpoint=bimini:29505 /fast/djohn/runs/Dec12.py Sep4_s2s_cluelessyolo | tee -a /fast/runlogs/Sep4_s2s_cluelessyolo.Sep10_152254/bimini.log
+5
+[91mMother process launched all children[0m
+clearing caches
+[sudo] password for windborne: [91m[Mother Sep10 15:23] 4 children. sleeping:3 running:1 [0m
+page cache cleared
+[91m[Mother Sep10 15:23] 8 children. sleeping:3 running:5 [0m
+[W CUDAAllocatorConfig.h:28] Warning: expandable_segments not supported on this platform (function operator())
+[15:23:19.71|01] Starting DDP with rank 1 world size 5
+[W CUDAAllocatorConfig.h:28] Warning: expandable_segments not supported on this platform (function operator())
+[W CUDAAllocatorConfig.h:28] Warning: expandable_segments not supported on this platform (function operator())
+[W CUDAAllocatorConfig.h:28] Warning: expandable_segments not supported on this platform (function operator())
+[15:23:19.92|00] use_tf32 is False
+[15:23:19.92|00] DDP timeout due to nccl error is set to 0:10:00 seconds
+[15:23:19.93|03] Starting DDP with rank 3 world size 5
+[15:23:19.93|00] use_tf32 is False
+[15:23:19.93|00] Starting DDP with rank 0 world size 5
+[W CUDAAllocatorConfig.h:28] Warning: expandable_segments not supported on this platform (function operator())
+[15:23:20.05|04] Starting DDP with rank 4 world size 5
+[15:23:20.14|02] Starting DDP with rank 2 world size 5
+[15:23:20.68|00] hey seed is 14235041280366486034
+[15:23:20.72|04] hey seed is 15538714702962798189
+[15:23:20.72|02] hey seed is 4894576573432302876
+[15:23:20.72|01] hey seed is 882178785728618709
+[15:23:20.75|03] hey seed is 6181498605907267941
+[15:23:21.29|00] Loaded model to cuda:0
+[15:23:21.29|00] heyyy making neoloader 276263
+[15:23:21.41|01] Loaded model to cuda:1
+[15:23:21.42|01] heyyy making neoloader 276264
+[15:23:21.51|02] Loaded model to cuda:2
+[15:23:21.51|02] heyyy making neoloader 276265
+[15:23:21.60|03] Loaded model to cuda:3
+[15:23:21.60|03] heyyy making neoloader 276266
+[15:23:21.62|04] Loaded model to cuda:4
+[15:23:21.62|04] heyyy making neoloader 276267
+[91m[Mother Sep10 15:23] 8 children. sleeping:3 running:5 [0m
+[15:23:29.33|00]  era5-28 | /fast/proc/era5/f000    num: 115470   | 1979-01-23 to 2024-05-01 | min dh 3 , max dh 9603, median dh 3.0 
+[91m[Mother Sep10 15:23] 8 children. sleeping:3 running:5 [0m
+[15:23:36.53|00]  era5-28 | /fast/proc/era5/f000    num: 115470   | 1979-01-23 to 2024-05-01 | min dh 3 , max dh 9603, median dh 3.0 
+[15:23:40.20|02] NeoWeatherDataset.check_for_dates took 18.681130s
+[15:23:40.21|00] NeoWeatherDataset.check_for_dates took 18.919521s
+[15:23:40.30|04] NeoWeatherDataset.check_for_dates took 18.677753s
+[15:23:40.44|03] NeoWeatherDataset.check_for_dates took 18.837418s
+[15:23:40.72|01] NeoWeatherDataset.check_for_dates took 19.302372s
+[91m[Mother Sep10 15:23] 18 children. sleeping:13 running:5 [0m
+[15:23:47.07|02] NeoLoader.__init__ took 25.557949s
+[15:23:47.22|04] NeoLoader.__init__ took 25.595503s
+[15:23:47.24|00] NeoLoader.__init__ took 25.953643s
+[15:23:47.29|03] NeoLoader.__init__ took 25.690005s
+[15:23:47.64|01] NeoLoader.__init__ took 26.228855s
+[15:23:48.17|02] Logging dates to /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/dataloader/dates/bimini2.log
+[15:23:48.22|00][15:23:48.22|00] [92m[Data Integrity] checked 0.00k/229.65k[0m
+ Setup data done
+[15:23:48.30|04] Logging dates to /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/dataloader/dates/bimini4.log
+[15:23:48.32|00] logging to /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319
+[15:23:48.32|00] Logging dates to /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/dataloader/dates/bimini0.log
+[15:23:48.32|00] Not symlinking console log
+[15:23:48.37|03] Logging dates to /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/dataloader/dates/bimini3.log
+[15:23:48.45|00] Setup logging done
+[15:23:48.55|00] number of params: 504.94M
+[15:23:48.56|00] number of trainable params: 504.94M
+[15:23:48.56|00] making optimizer with namespace(betas=(0.9, 0.99), weight_decay=0.001) shampoo old
+[15:23:48.70|01] Logging dates to /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/dataloader/dates/bimini1.log
+[15:23:49.74|01] self.N_training_samples: 114365 [15:23:49.74|01] 
+[15:23:49.74|01] waiting for data loader to start
+[15:23:49.74|02] self.N_training_samples: 114365 [15:23:49.74|02] 
+[15:23:49.74|02] waiting for data loader to start
+[15:23:49.81|00] hey old (0.9, 0.99) new (0.9, 0.99)
+[15:23:49.81|00] Setup training done
+[15:23:49.83|04] self.N_training_samples: 114365 [15:23:49.83|04] 
+[15:23:49.83|04] waiting for data loader to start
+[15:23:49.85|03] self.N_training_samples: 114365 [15:23:49.85|03] 
+[15:23:49.85|03] waiting for data loader to start
+[15:23:49.95|00] self.N_training_samples: 114365 [15:23:49.95|00] 
+[15:23:49.95|00] Logging every 25 iterations
+[15:23:49.95|00] Saving every 100 iterations
+[15:23:49.95|00] Starting training
+[15:23:49.95|00] waiting for data loader to start
+[15:23:51.59|02] launch stats took 4.514722s
+[15:23:51.72|04] launch stats took 4.502190s
+[15:23:51.75|00] launch stats took 4.511947s
+[15:23:51.84|03] launch stats took 4.549993s
+[15:23:52.14|01] launch stats took 4.494479s
+[91m[Mother Sep10 15:23] 28 children. sleeping:20 running:8 [0m
+[15:23:56.00|02] launch worker 0 took 4.414732s
+[15:23:56.13|04] launch worker 0 took 4.414124s
+[15:23:56.20|00] launch worker 0 took 4.450731s
+[15:23:56.27|03] launch worker 0 took 4.427197s
+[15:23:56.54|01] launch worker 0 took 4.397993s
+[15:24:00.59|02] launch worker 1 took 4.586854s
+[15:24:00.59|02] stuff1 took 0.000806s
+[15:24:00.60|02] launch remover took 0.005299s
+[15:24:00.60|02] NeoLoader.start took 13.523844s
+[15:24:00.61|04] launch worker 1 took 4.472944s
+[15:24:00.61|04] stuff1 took 0.000885s
+[15:24:00.61|04] launch remover took 0.003720s
+[15:24:00.61|04] NeoLoader.start took 13.394733s
+[15:24:00.68|00] launch worker 1 took 4.475813s
+[15:24:00.68|00] stuff1 took 0.000628s
+[15:24:00.69|00] launch remover took 0.005424s
+[15:24:00.69|00] NeoLoader.start took 13.446430s
+[15:24:00.70|03] launch worker 1 took 4.436535s
+[15:24:00.70|03] stuff1 took 0.000663s
+[15:24:00.71|03] launch remover took 0.005304s
+[15:24:00.71|03] NeoLoader.start took 13.420408s
+[15:24:01.06|01] launch worker 1 took 4.527102s
+[15:24:01.07|01] stuff1 took 0.000615s
+[15:24:01.07|01] launch remover took 0.005383s
+[15:24:01.07|01] NeoLoader.start took 13.428836s
+[15:24:02.57|01] NeoLoader.find_best_sample took 1.451789s
+[15:24:02.57|01] NeoLoader.get_next_instances took 1.451956s
+[15:24:02.97|04] NeoLoader.find_best_sample took 2.311083s
+[15:24:02.97|04] NeoLoader.get_next_instances took 2.311244s
+[15:24:03.03|02] NeoLoader.find_best_sample took 2.394477s
+[15:24:03.03|02] NeoLoader.get_next_instances took 2.394658s
+[15:24:03.16|03] NeoLoader.find_best_sample took 2.409328s
+[15:24:03.16|03] NeoLoader.get_next_instances took 2.409506s
+[15:24:03.47|00] NeoLoader.find_best_sample took 2.733533s
+[15:24:03.47|00] NeoLoader.get_next_instances took 2.733811s
+[15:24:03.61|04] NeoLoader.find_best_sample took 0.586023s
+[15:24:03.61|04] NeoLoader.get_next_instances took 0.586131s
+[15:24:03.83|02] NeoLoader.find_best_sample took 0.740001s
+[15:24:03.83|02] NeoLoader.get_next_instances took 0.740303s
+[15:24:03.91|03] NeoLoader.find_best_sample took 0.696281s
+[15:24:03.91|03] NeoLoader.get_next_instances took 0.696409s
+[15:24:04.23|00] NeoLoader.find_best_sample took 0.714750s
+[15:24:04.23|00] NeoLoader.get_next_instances took 0.715103s
+[15:24:04.41|01] NeoLoader.find_best_sample took 1.796051s
+[15:24:04.41|01] NeoLoader.get_next_instances took 1.796378s
+[15:24:04.45|04] NeoLoader.find_best_sample took 0.798439s
+[15:24:04.45|04] NeoLoader.get_next_instances took 0.798673s
+[15:24:04.58|03] NeoLoader.find_best_sample took 0.611022s
+[15:24:04.58|03] NeoLoader.get_next_instances took 0.611375s
+[91m[Mother Sep10 15:24] 33 children. sleeping:20 running:13 [0m
+[15:24:05.19|02] NeoLoader.find_best_sample took 1.314615s
+[15:24:05.19|02] NeoLoader.get_next_instances took 1.315021s
+[15:24:06.17|04] NeoLoader.find_best_sample took 1.663100s
+[15:24:06.17|04] NeoLoader.get_next_instances took 1.663318s
+[15:24:06.44|02] NeoLoader.find_best_sample took 1.198506s
+[15:24:06.44|02] NeoLoader.get_next_instances took 1.199573s
+[15:24:06.69|01] NeoLoader.find_best_sample took 2.223388s
+[15:24:06.69|01] NeoLoader.get_next_instances took 2.223566s
+[15:24:07.32|00] NeoLoader.find_best_sample took 3.028783s
+[15:24:07.32|00] NeoLoader.get_next_instances took 3.029003s
+[15:24:07.67|04] NeoLoader.find_best_sample took 1.434936s
+[15:24:07.67|04] NeoLoader.get_next_instances took 1.436518s
+[15:24:07.73|03] NeoLoader.find_best_sample took 3.090899s
+[15:24:07.73|03] NeoLoader.get_next_instances took 3.091101s
+[15:24:08.77|01] NeoLoader.find_best_sample took 2.028617s
+[15:24:08.77|01] NeoLoader.get_next_instances took 2.029701s
+[15:24:10.92|03] NeoLoader.find_best_sample took 3.140075s
+[15:24:10.92|03] NeoLoader.get_next_instances took 3.140568s
+[15:24:11.16|00] NeoLoader.find_best_sample took 3.789350s
+[15:24:11.16|00] NeoLoader.get_next_instances took 3.789647s
+[15:24:12.65|03] NeoLoader.find_best_sample took 1.680264s
+[15:24:12.65|03] NeoLoader.get_next_instances took 1.681600s
+[15:24:14.61|00] NeoLoader.find_best_sample took 3.395935s
+[15:24:14.61|00] NeoLoader.get_next_instances took 3.397315s
+[91m[Mother Sep10 15:24] 33 children. sleeping:28 running:4 disk-sleep:1 [0m
+[15:24:16.25|02] NeoLoader.prep_sample took 9.804639s
+[15:24:16.25|02] WARNING: sample took 15.649338483810425 seconds to get
+[15:24:16.88|04] NeoLoader.prep_sample took 9.210037s
+[15:24:16.88|04] WARNING: sample took 16.266206741333008 seconds to get
+[15:24:18.71|01] NeoLoader.prep_sample took 9.938260s
+[15:24:18.71|01] WARNING: sample took 17.633024215698242 seconds to get
+[15:24:18.82|03] NeoLoader.prep_sample took 6.173105s
+[15:24:18.82|03] WARNING: sample took 18.112533569335938 seconds to get
+[15:24:20.20|03] NeoLoader.find_best_sample took 1.321830s
+[15:24:20.20|03] NeoLoader.get_next_instances took 1.323817s
+[15:24:20.69|02] NeoLoader.find_best_sample took 4.393667s
+[15:24:20.69|02] NeoLoader.get_next_instances took 4.395807s
+[15:24:22.85|04] NeoLoader.find_best_sample took 5.912949s
+[15:24:22.85|04] NeoLoader.get_next_instances took 5.915547s
+[15:24:24.24|00] NeoLoader.prep_sample took 9.628561s
+[15:24:24.24|00] WARNING: sample took 23.547187328338623 seconds to get
+[91m[Mother Sep10 15:24] 33 children. sleeping:21 running:11 disk-sleep:1 [0m
+[15:24:25.28|00] NeoLoader.find_best_sample took 0.996257s
+[15:24:25.33|00] NeoLoader.get_next_instances took 1.041733s
+[15:24:25.66|01] NeoLoader.find_best_sample took 6.900956s
+[15:24:25.66|01] NeoLoader.get_next_instances took 6.902398s
+[15:24:26.71|03] NeoLoader.prep_sample took 6.509209s
+[15:24:27.83|02] NeoLoader.prep_sample took 7.140968s
+[15:24:28.31|03] NeoLoader.find_best_sample took 1.556516s
+[15:24:28.32|03] NeoLoader.get_next_instances took 1.558054s
+[15:24:29.75|02] NeoLoader.find_best_sample took 1.867901s
+[15:24:29.75|02] NeoLoader.get_next_instances took 1.869515s
+[15:24:33.99|04] NeoLoader.prep_sample took 11.140025s
+[91m[Mother Sep10 15:24] 33 children. sleeping:21 running:10 disk-sleep:2 [0m
+[15:24:34.86|04] NeoLoader.find_best_sample took 0.816049s
+[15:24:34.86|04] NeoLoader.get_next_instances took 0.817218s
+[15:24:35.56|00] NeoLoader.prep_sample took 10.234119s
+[15:24:37.25|02] NeoLoader.prep_sample took 7.496118s
+[15:24:38.05|03] NeoLoader.prep_sample took 9.737710s
+[15:24:38.42|00] NeoLoader.find_best_sample took 2.811228s
+[15:24:38.43|00] NeoLoader.get_next_instances took 2.813884s
+[15:24:38.98|01] NeoLoader.prep_sample took 13.315669s
+[15:24:40.10|03] NeoLoader.find_best_sample took 2.042000s
+[15:24:40.23|01] NeoLoader.find_best_sample took 1.194261s
+[15:24:40.23|01] NeoLoader.get_next_instances took 1.196113s
+[15:24:44.55|02] NeoLoader.find_best_sample took 6.870605s
+[91m[Mother Sep10 15:24] 33 children. sleeping:22 running:11 [0m
+[15:24:45.75|02][15:24:45.75|01][15:24:45.75|03]  loss: 1.3709381818771362loss: 1.370910882949829 
+
+loss: 1.3702343702316284
+[15:24:45.75|04] loss: 1.3687554597854614
+[15:24:45.77|00] loss: 1.3729902505874634
+[15:24:45.77|00] Rank 0 loss: 1.3707658052444458
+[15:24:48.99|04] NeoLoader.prep_sample took 14.129214s
+[15:24:50.59|03] NeoLoader.find_best_sample took 2.703640s
+[15:24:50.95|02] NeoLoader.remove_samples took 13.274082s
+[15:24:52.74|00] NeoLoader.prep_sample took 14.310038s
+[15:24:54.00|01] NeoLoader.prep_sample took 13.772134s
+[91m[Mother Sep10 15:24] 33 children. sleeping:25 running:8 [0m
+/home/windborne/.local/lib/python3.10/site-packages/torch/autograd/graph.py:690: UserWarning: c10d::allreduce_: an autograd kernel was not registered to the Autograd key(s) but we are trying to backprop through it. This may lead to silently incorrect behavior. This behavior is deprecated and will be removed in a future version of PyTorch. If your operator is differentiable, please ensure you have registered an autograd kernel to the correct Autograd key (e.g. DispatchKey::Autograd, DispatchKey::CompositeImplicitAutograd). If your operator is not differentiable, or to squash this warning and use the previous behavior, please register torch::CppFunction::makeFallthrough() to DispatchKey::Autograd. (Triggered internally at ../torch/csrc/autograd/autograd_not_implemented_fallback.cpp:63.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/windborne/.local/lib/python3.10/site-packages/torch/autograd/graph.py:690: UserWarning: c10d::allreduce_: an autograd kernel was not registered to the Autograd key(s) but we are trying to backprop through it. This may lead to silently incorrect behavior. This behavior is deprecated and will be removed in a future version of PyTorch. If your operator is differentiable, please ensure you have registered an autograd kernel to the correct Autograd key (e.g. DispatchKey::Autograd, DispatchKey::CompositeImplicitAutograd). If your operator is not differentiable, or to squash this warning and use the previous behavior, please register torch::CppFunction::makeFallthrough() to DispatchKey::Autograd. (Triggered internally at ../torch/csrc/autograd/autograd_not_implemented_fallback.cpp:63.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/windborne/.local/lib/python3.10/site-packages/torch/autograd/graph.py:690: UserWarning: c10d::allreduce_: an autograd kernel was not registered to the Autograd key(s) but we are trying to backprop through it. This may lead to silently incorrect behavior. This behavior is deprecated and will be removed in a future version of PyTorch. If your operator is differentiable, please ensure you have registered an autograd kernel to the correct Autograd key (e.g. DispatchKey::Autograd, DispatchKey::CompositeImplicitAutograd). If your operator is not differentiable, or to squash this warning and use the previous behavior, please register torch::CppFunction::makeFallthrough() to DispatchKey::Autograd. (Triggered internally at ../torch/csrc/autograd/autograd_not_implemented_fallback.cpp:63.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/windborne/.local/lib/python3.10/site-packages/torch/autograd/graph.py:690: UserWarning: c10d::allreduce_: an autograd kernel was not registered to the Autograd key(s) but we are trying to backprop through it. This may lead to silently incorrect behavior. This behavior is deprecated and will be removed in a future version of PyTorch. If your operator is differentiable, please ensure you have registered an autograd kernel to the correct Autograd key (e.g. DispatchKey::Autograd, DispatchKey::CompositeImplicitAutograd). If your operator is not differentiable, or to squash this warning and use the previous behavior, please register torch::CppFunction::makeFallthrough() to DispatchKey::Autograd. (Triggered internally at ../torch/csrc/autograd/autograd_not_implemented_fallback.cpp:63.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/windborne/.local/lib/python3.10/site-packages/torch/autograd/graph.py:690: UserWarning: c10d::allreduce_: an autograd kernel was not registered to the Autograd key(s) but we are trying to backprop through it. This may lead to silently incorrect behavior. This behavior is deprecated and will be removed in a future version of PyTorch. If your operator is differentiable, please ensure you have registered an autograd kernel to the correct Autograd key (e.g. DispatchKey::Autograd, DispatchKey::CompositeImplicitAutograd). If your operator is not differentiable, or to squash this warning and use the previous behavior, please register torch::CppFunction::makeFallthrough() to DispatchKey::Autograd. (Triggered internally at ../torch/csrc/autograd/autograd_not_implemented_fallback.cpp:63.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[15:24:59.40|03] NeoLoader.remove_samples took 11.524215s
+[15:25:04.81|01] [95mstep 1 | Load: 17.63 | GPU TX: 0.22 | GPU: 39.37 | Step: 6.51 | Other: 0.00 | Total: 63.74 | VRAM 16.61 [0m
+[15:25:04.81|03] [95mstep 1 | Load: 18.11 | GPU TX: 0.22 | GPU: 39.26 | Step: 6.51 | Other: 0.00 | Total: 64.10 | VRAM 21.69 [0m
+[15:25:04.81|02] [95mstep 1 | Load: 15.65 | GPU TX: 0.19 | GPU: 41.86 | Step: 6.51 | Other: 0.00 | Total: 64.22 | VRAM 16.61 [0m
+[15:25:04.84|04][15:25:04.84|00] [95mstep 1 | Load: 23.55 | GPU TX: 0.27 | GPU: 33.81 | Step: 6.53 | Other: 0.00 | Total: 64.15 | VRAM 16.86 [0m
+ [95mstep 1 | Load: 16.27 | GPU TX: 0.20 | GPU: 41.23 | Step: 6.51 | Other: 0.00 | Total: 64.20 | VRAM 21.22 [0m
+[91m[Mother Sep10 15:25] 33 children. sleeping:22 running:11 [0m
+[15:25:08.85|01] loss: 1.3516258001327515
+[15:25:08.87|03] loss: 1.3533209562301636
+[15:25:08.89|02] loss: 1.3543058633804321
+[15:25:08.91|04] loss: 1.3519700765609741
+[15:25:08.93|00] loss: 1.3570177555084229
+[15:25:08.93|00] Rank 0 loss: 1.3536481857299805
+[15:25:10.08|01] NeoLoader.find_best_sample took 9.373012s
+[15:25:10.60|00] NeoLoader.find_best_sample took 6.671343s
+[15:25:10.73|01] NeoLoader.remove_samples took 10.031710s
+[15:25:10.95|03] NeoLoader.find_best_sample took 11.498022s
+[15:25:11.74|02] NeoLoader.find_best_sample took 7.676155s
+[15:25:13.67|01] NeoLoader.find_best_sample took 2.944672s
+[15:25:13.68|01] NeoLoader.get_next_instances took 2.954597s
+[91m[Mother Sep10 15:25] 33 children. sleeping:29 running:4 [0m
+[15:25:15.16|04] NeoLoader.find_best_sample took 10.001625s
+[15:25:15.16|04] NeoLoader.get_next_instances took 10.004002s
+[15:25:17.03|00] NeoLoader.remove_samples took 13.109589s
+[15:25:17.29|02] NeoLoader.remove_samples took 13.265468s
+[15:25:19.68|01] NeoLoader.prep_sample took 5.994162s
+[15:25:20.80|03] NeoLoader.remove_samples took 21.345114s
+[15:25:22.70|03] NeoLoader.find_best_sample took 1.902663s
+[15:25:22.70|03] NeoLoader.get_next_instances took 1.904229s
+[15:25:23.12|00] NeoLoader.find_best_sample took 6.081198s
+[15:25:23.12|00] NeoLoader.get_next_instances took 6.082594s
+[15:25:23.21|01] NeoLoader.find_best_sample took 3.534552s
+[15:25:23.57|04] NeoLoader.prep_sample took 8.402318s
+[15:25:24.19|02] NeoLoader.find_best_sample took 6.894600s
+[15:25:24.19|02] NeoLoader.get_next_instances took 6.895296s
+[91m[Mother Sep10 15:25] 33 children. sleeping:23 running:10 [0m
+[15:25:25.49|01] NeoLoader.find_best_sample took 2.113892s
+[15:25:26.89|01] NeoLoader.find_best_sample took 1.221323s
+^C[2024-09-10 15:25:27,176] torch.distributed.elastic.agent.server.api: [WARNING] Received Signals.SIGINT death signal, shutting down workers
+[2024-09-10 15:25:27,176] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276263 closing signal SIGINT
+Traceback (most recent call last):
+  File "/fast/djohn/runs/Dec12.py", line 2833, in <module>
+[2024-09-10 15:25:27,176] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276264 closing signal SIGINT
+[2024-09-10 15:25:27,176] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276265 closing signal SIGINT
+Process Process-3:
+[2024-09-10 15:25:27,176] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276266 closing signal SIGINT
+[2024-09-10 15:25:27,177] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276267 closing signal SIGINT
+Process Process-4:
+Process Process-3:
+Process Process-3:
+Process Process-4:
+Process Process-3:
+Process Process-4:
+Process Process-3:
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/fast/djohn/dataloader.py", line 589, in run
+    time.sleep(1)
+  File "/fast/djohn/dataloader.py", line 589, in run
+    time.sleep(1)
+KeyboardInterrupt
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/fast/djohn/dataloader.py", line 589, in run
+    time.sleep(1)
+KeyboardInterrupt
+Traceback (most recent call last):
+    run(locals().values())
+  File "/fast/djohn/runs/launch.py", line 230, in run
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/fast/djohn/dataloader.py", line 589, in run
+    time.sleep(1)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/fast/djohn/dataloader.py", line 589, in run
+    time.sleep(1)
+KeyboardInterrupt
+    time.sleep(10)
+KeyboardInterrupt
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/fast/djohn/dataloader.py", line 595, in run
+    instances_to_load = self.get_instances_to_load()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/dataloader.py", line 620, in get_instances_to_load
+    with self.worker_lock:
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/usr/lib/python3.10/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/fast/djohn/dataloader.py", line 589, in run
+    time.sleep(1)
+KeyboardInterrupt
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/fast/djohn/dataloader.py", line 595, in run
+    instances_to_load = self.get_instances_to_load()
+  File "/fast/djohn/dataloader.py", line 637, in get_instances_to_load
+    idxs = self.find_best_sample()
+  File "/fast/djohn/utils.py", line 795, in wrapper
+    ret = func(*args, **kwargs)
+  File "/fast/djohn/dataloader.py", line 706, in find_best_sample
+    loaded_plus = set.union(set(self.loaded_instances),{min(self.loaded_instances)-i for i in range(1,c.sample_range)})
+  File "/fast/djohn/dataloader.py", line 706, in <setcomp>
+    loaded_plus = set.union(set(self.loaded_instances),{min(self.loaded_instances)-i for i in range(1,c.sample_range)})
+  File "<string>", line 2, in __getitem__
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 818, in _callmethod
+    kind, result = conn.recv()
+  File "/usr/lib/python3.10/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/usr/lib/python3.10/multiprocessing/connection.py", line 414, in _recv_bytes
+    buf = self._recv(4)
+  File "/usr/lib/python3.10/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+KeyboardInterrupt
+Process Process-4:
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/fast/djohn/dataloader.py", line 595, in run
+    instances_to_load = self.get_instances_to_load()
+  File "/fast/djohn/dataloader.py", line 637, in get_instances_to_load
+    idxs = self.find_best_sample()
+  File "/fast/djohn/utils.py", line 795, in wrapper
+    ret = func(*args, **kwargs)
+KeyboardInterrupt
+Process Process-4:
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/dataloader.py", line 537, in launch_neo_loader_worker
+    worker.run()
+  File "/fast/djohn/dataloader.py", line 600, in run
+    instance = c.WeatherInstanceType(idx,self.config)
+  File "/fast/djohn/data.py", line 279, in __init__
+    self.write(pr,sfc)
+  File "/fast/djohn/data.py", line 168, in write
+    self.write_shm(pr,sfc)
+  File "/fast/djohn/data.py", line 222, in write_shm
+    pr_shm.close()
+  File "/usr/lib/python3.10/multiprocessing/shared_memory.py", line 223, in close
+    def close(self):
+KeyboardInterrupt
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 1, in <module>
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    exitcode = _main(fd, parent_sentinel)
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+    exitcode = _main(fd, parent_sentinel)
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    return self._bootstrap(parent_sentinel)
+    return self._bootstrap(parent_sentinel)
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+    util._flush_std_streams()
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    return self._bootstrap(parent_sentinel)
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+    sys.stdout.flush()
+    sys.stdout.flush()
+    sys.stdout.flush()
+    sys.stdout.flush()
+BrokenPipeError: [Errno 32] Broken pipe
+BrokenPipeError: [Errno 32] Broken pipe
+    util._flush_std_streams()
+BrokenPipeError: [Errno 32] Broken pipe
+BrokenPipeError: [Errno 32] Broken pipe
+    sys.stdout.flush()
+    sys.stdout.flush()
+    sys.stdout.flush()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+BrokenPipeError: [Errno 32] Broken pipe
+BrokenPipeError: [Errno 32] Broken pipe
+BrokenPipeError: [Errno 32] Broken pipe
+    sys.stdout.flush()
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    sys.stdout.flush()
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    sys.stdout.flush()
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    sys.stdout.flush()
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    sys.stdout.flush()
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+BrokenPipeError: [Errno 32] Broken pipe
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    sys.stdout.flush()
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    sys.stdout.flush()
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 116, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/spawn.py", line 129, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 334, in _bootstrap
+    util._flush_std_streams()
+  File "/usr/lib/python3.10/multiprocessing/util.py", line 435, in _flush_std_streams
+    sys.stdout.flush()
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+  File "/fast/djohn/train.py", line 170, in run
+    self.train()
+  File "/fast/djohn/train.py", line 1034, in train
+    self.train_sample(sample)
+  File "/fast/djohn/train.py", line 1091, in train_sample
+    self.model_step(B)
+  File "/fast/djohn/train.py", line 1175, in model_step
+    memory_list = [torch.zeros(1).cuda() for _ in range(self.num_gpus)]
+  File "/fast/djohn/train.py", line 1175, in <listcomp>
+    memory_list = [torch.zeros(1).cuda() for _ in range(self.num_gpus)]
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fast/djohn/runs/Dec12.py", line 2833, in <module>
+Traceback (most recent call last):
+  File "/fast/djohn/train.py", line 170, in run
+    run(locals().values())
+  File "/fast/djohn/runs/launch.py", line 124, in run
+    self.train()
+  File "/fast/djohn/train.py", line 1034, in train
+Traceback (most recent call last):
+    run_training_fn(func)  File "/fast/djohn/train.py", line 170, in run
+
+  File "/fast/djohn/runs/launch.py", line 81, in run_training_fn
+    for r in res:
+  File "/fast/djohn/runs/launch.py", line 54, in wrapper
+    self.train_sample(sample)
+  File "/fast/djohn/train.py", line 1091, in train_sample
+    yield from result
+  File "/fast/djohn/runs/Dec12.py", line 144, in Sep4_s2s_cluelessyolo
+        w.run()
+  File "/fast/djohn/train.py", line 173, in run
+self.train()
+  File "/fast/djohn/train.py", line 1034, in train
+    print("Training failed, saving weights")
+  File "/fast/djohn/utils.py", line 788, in print
+    self.model_step(B)
+  File "/fast/djohn/train.py", line 1175, in model_step
+    builtins.print(f"[{(lambda n: f'{n.hour:02}:{n.minute:02}:{n.second:02}.{int(n.microsecond / 1e4):02}')(datetime.now())}|{r:02}]", *args, **kwargs)
+BrokenPipeError: [Errno 32] Broken pipe
+    self.train_sample(sample)
+  File "/fast/djohn/train.py", line 1091, in train_sample
+    memory_list = [torch.zeros(1).cuda() for _ in range(self.num_gpus)]
+  File "/fast/djohn/train.py", line 1175, in <listcomp>
+    memory_list = [torch.zeros(1).cuda() for _ in range(self.num_gpus)]
+KeyboardInterrupt    self.model_step(B)
+
+
+During handling of the above exception, another exception occurred:
+
+  File "/fast/djohn/train.py", line 1160, in model_step
+Traceback (most recent call last):
+  File "/fast/djohn/runs/Dec12.py", line 2833, in <module>
+    self.writer.add_scalar('Learning/GradScaler', self.scaler.get_scale(), self.state.n_step)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/cuda/amp/grad_scaler.py", line 540, in get_scale
+Traceback (most recent call last):
+    run(locals().values())
+  File "/fast/djohn/train.py", line 170, in run
+  File "/fast/djohn/runs/launch.py", line 124, in run
+    run_training_fn(func)
+  File "/fast/djohn/runs/launch.py", line 81, in run_training_fn
+        self.train()for r in res:
+  File "/fast/djohn/runs/launch.py", line 54, in wrapper
+
+  File "/fast/djohn/train.py", line 1034, in train
+    yield from result
+  File "/fast/djohn/runs/Dec12.py", line 144, in Sep4_s2s_cluelessyolo
+    w.run()
+  File "/fast/djohn/train.py", line 173, in run
+    print("Training failed, saving weights")
+  File "/fast/djohn/utils.py", line 788, in print
+    self.train_sample(sample)
+  File "/fast/djohn/train.py", line 1091, in train_sample
+    builtins.print(f"[{(lambda n: f'{n.hour:02}:{n.minute:02}:{n.second:02}.{int(n.microsecond / 1e4):02}')(datetime.now())}|{r:02}]", *args, **kwargs)
+BrokenPipeError: [Errno 32] Broken pipe
+    else cast(float, scale.item())
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fast/djohn/runs/Dec12.py", line 2833, in <module>
+    self.model_step(B)
+  File "/fast/djohn/train.py", line 1175, in model_step
+    memory_list = [torch.zeros(1).cuda() for _ in range(self.num_gpus)]
+  File "/fast/djohn/train.py", line 1175, in <listcomp>
+    run(locals().values())
+  File "/fast/djohn/runs/launch.py", line 124, in run
+    memory_list = [torch.zeros(1).cuda() for _ in range(self.num_gpus)]
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fast/djohn/runs/Dec12.py", line 2833, in <module>
+    run_training_fn(func)
+  File "/fast/djohn/runs/launch.py", line 81, in run_training_fn
+    for r in res:
+  File "/fast/djohn/runs/launch.py", line 54, in wrapper
+    yield from result
+  File "/fast/djohn/runs/Dec12.py", line 144, in Sep4_s2s_cluelessyolo
+    w.run()
+  File "/fast/djohn/train.py", line 173, in run
+    print("Training failed, saving weights")
+  File "/fast/djohn/utils.py", line 788, in print
+    run(locals().values())
+  File "/fast/djohn/runs/launch.py", line 124, in run
+    builtins.print(f"[{(lambda n: f'{n.hour:02}:{n.minute:02}:{n.second:02}.{int(n.microsecond / 1e4):02}')(datetime.now())}|{r:02}]", *args, **kwargs)
+BrokenPipeError: [Errno 32] Broken pipe
+    run_training_fn(func)
+  File "/fast/djohn/runs/launch.py", line 81, in run_training_fn
+    for r in res:
+  File "/fast/djohn/runs/launch.py", line 54, in wrapper
+    yield from result
+  File "/fast/djohn/runs/Dec12.py", line 144, in Sep4_s2s_cluelessyolo
+    w.run()
+  File "/fast/djohn/train.py", line 173, in run
+    print("Training failed, saving weights")
+  File "/fast/djohn/utils.py", line 788, in print
+    builtins.print(f"[{(lambda n: f'{n.hour:02}:{n.minute:02}:{n.second:02}.{int(n.microsecond / 1e4):02}')(datetime.now())}|{r:02}]", *args, **kwargs)
+BrokenPipeError: [Errno 32] Broken pipe
+Exception in thread Thread-2 (wrapper):
+Traceback (most recent call last):
+  File "/fast/djohn/utils.py", line 895, in wrapper
+    return func(*args, **kwargs)
+  File "/fast/djohn/dataloader.py", line 369, in instance_remover
+    num = self.remove_samples()
+  File "/fast/djohn/utils.py", line 795, in wrapper
+    ret = func(*args, **kwargs)
+  File "/fast/djohn/dataloader.py", line 382, in remove_samples
+    idxs = self.find_best_sample(to_kill=True)
+  File "/fast/djohn/utils.py", line 795, in wrapper
+    ret = func(*args, **kwargs)
+  File "/fast/djohn/dataloader.py", line 404, in find_best_sample
+    instm = list([self.instance_metadata[i] for i in active_idx])
+  File "/fast/djohn/dataloader.py", line 404, in <listcomp>
+    instm = list([self.instance_metadata[i] for i in active_idx])
+  File "<string>", line 2, in __getitem__
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 833, in _callmethod
+    raise convert_to_error(kind, result)
+multiprocessing.managers.RemoteError: 
+---------------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 260, in serve_client
+    self.id_to_local_proxy_obj[ident]
+KeyError: '7f0fd3658380'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 262, in serve_client
+    raise ke
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 256, in serve_client
+    obj, exposed, gettypeid = id_to_obj[ident]
+KeyError: '7f0fd3658380'
+---------------------------------------------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/utils.py", line 903, in wrapper
+    print(f"{ss} Exception",e)
+  File "/fast/djohn/utils.py", line 788, in print
+    builtins.print(f"[{(lambda n: f'{n.hour:02}:{n.minute:02}:{n.second:02}.{int(n.microsecond / 1e4):02}')(datetime.now())}|{r:02}]", *args, **kwargs)
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+  File "/fast/djohn/train.py", line 170, in run
+    self.train()
+  File "/fast/djohn/train.py", line 1034, in train
+    self.train_sample(sample)
+  File "/fast/djohn/train.py", line 1091, in train_sample
+    self.model_step(B)
+  File "/fast/djohn/train.py", line 1175, in model_step
+    memory_list = [torch.zeros(1).cuda() for _ in range(self.num_gpus)]
+  File "/fast/djohn/train.py", line 1175, in <listcomp>
+    memory_list = [torch.zeros(1).cuda() for _ in range(self.num_gpus)]
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/fast/djohn/runs/Dec12.py", line 2833, in <module>
+    run(locals().values())
+  File "/fast/djohn/runs/launch.py", line 124, in run
+    run_training_fn(func)
+  File "/fast/djohn/runs/launch.py", line 81, in run_training_fn
+    for r in res:
+  File "/fast/djohn/runs/launch.py", line 54, in wrapper
+    yield from result
+  File "/fast/djohn/runs/Dec12.py", line 144, in Sep4_s2s_cluelessyolo
+    w.run()
+  File "/fast/djohn/train.py", line 173, in run
+    print("Training failed, saving weights")
+  File "/fast/djohn/utils.py", line 788, in print
+    builtins.print(f"[{(lambda n: f'{n.hour:02}:{n.minute:02}:{n.second:02}.{int(n.microsecond / 1e4):02}')(datetime.now())}|{r:02}]", *args, **kwargs)
+BrokenPipeError: [Errno 32] Broken pipe
+Exception in thread Thread-2 (wrapper):
+Traceback (most recent call last):
+  File "/fast/djohn/utils.py", line 895, in wrapper
+Exception in thread instance_reciever:
+Traceback (most recent call last):
+  File "/fast/djohn/utils.py", line 895, in wrapper
+    return func(*args, **kwargs)
+  File "/fast/djohn/dataloader.py", line 369, in instance_remover
+    return func(*args, **kwargs)
+  File "/fast/djohn/dataloader.py", line 254, in instance_reciever
+    self.process_instances(instances)    num = self.remove_samples()
+
+  File "/fast/djohn/dataloader.py", line 264, in process_instances
+  File "/fast/djohn/utils.py", line 795, in wrapper
+    m = self.instance_metadata[instance.idx]
+  File "<string>", line 2, in __getitem__
+    ret = func(*args, **kwargs)
+  File "/fast/djohn/dataloader.py", line 382, in remove_samples
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 833, in _callmethod
+    idxs = self.find_best_sample(to_kill=True)
+  File "/fast/djohn/utils.py", line 795, in wrapper
+    raise convert_to_error(kind, result)
+multiprocessing.managers.RemoteError: 
+---------------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 260, in serve_client
+    self.id_to_local_proxy_obj[ident]
+KeyError: '7f3931540440'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 262, in serve_client
+    raise ke
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 256, in serve_client
+    obj, exposed, gettypeid = id_to_obj[ident]
+KeyError: '7f3931540440'
+---------------------------------------------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+        ret = func(*args, **kwargs)self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+
+  File "/fast/djohn/dataloader.py", line 433, in find_best_sample
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/utils.py", line 903, in wrapper
+    print(f"{ss} Exception",e)
+  File "/fast/djohn/utils.py", line 788, in print
+    builtins.print(f"[{(lambda n: f'{n.hour:02}:{n.minute:02}:{n.second:02}.{int(n.microsecond / 1e4):02}')(datetime.now())}|{r:02}]", *args, **kwargs)
+BrokenPipeError:     [Errno 32] Broken pipefor li in self.loaded_instances:
+
+  File "<string>", line 2, in __getitem__
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 833, in _callmethod
+    raise convert_to_error(kind, result)
+multiprocessing.managers.RemoteError: 
+---------------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 260, in serve_client
+    self.id_to_local_proxy_obj[ident]
+KeyError: '7f3931540200'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 262, in serve_client
+    raise ke
+  File "/usr/lib/python3.10/multiprocessing/managers.py", line 256, in serve_client
+    obj, exposed, gettypeid = id_to_obj[ident]
+KeyError: '7f3931540200'
+---------------------------------------------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/fast/djohn/utils.py", line 903, in wrapper
+    print(f"{ss} Exception",e)
+  File "/fast/djohn/utils.py", line 788, in print
+    builtins.print(f"[{(lambda n: f'{n.hour:02}:{n.minute:02}:{n.second:02}.{int(n.microsecond / 1e4):02}')(datetime.now())}|{r:02}]", *args, **kwargs)
+BrokenPipeError: [Errno 32] Broken pipe
+terminate called without an active exception
+terminate called without an active exception
+terminate called without an active exception
+^CException ignored in: <module 'threading' from '/usr/lib/python3.10/threading.py'>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1567, in _shutdown
+[2024-09-10 15:25:29,344] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276263 closing signal SIGTERM
+[2024-09-10 15:25:29,344] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276264 closing signal SIGTERM
+[2024-09-10 15:25:29,344] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276265 closing signal SIGTERM
+    lock.acquire()
+[2024-09-10 15:25:29,344] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276266 closing signal SIGTERM
+KeyboardInterrupt: 
+[2024-09-10 15:25:29,344] torch.distributed.elastic.multiprocessing.api: [WARNING] Sending process 276267 closing signal SIGTERM
+
+[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ /usr/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 64 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/usr/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 72 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/usr/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 70 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/usr/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 64 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/usr/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 74 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+^C[?2004l[?2004h[?2004l
+[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ rm -rf /huge/runs[K[K[K[Kdeep/runs/run_Sep9[K8[KTraceback (most recent call last):
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 727, in run
+    result = self._invoke_run(role)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 868, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 62, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 276257 got signal: 2
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/windborne/.local/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 347, in wrapper
+    return f(*args, **kwargs)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/run.py", line 812, in main
+    run(args)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/run.py", line 803, in run
+    elastic_launch(
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 135, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 259, in launch_agent
+    result = agent.run()
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/metrics/api.py", line 123, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 734, in run
+    self._shutdown(e.sigval)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/local_elastic_agent.py", line 311, in _shutdown
+    self._pcontext.close(death_sig)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 318, in close
+    self._close(death_sig=death_sig, timeout=timeout)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 706, in _close
+    handler.proc.wait(time_to_wait)
+  File "/usr/lib/python3.10/subprocess.py", line 1209, in wait
+    return self._wait(timeout=timeout)
+  File "/usr/lib/python3.10/subprocess.py", line 1953, in _wait
+    time.sleep(delay)
+  File "/home/windborne/.local/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 62, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 276257 got signal: 2
+1-middleschooler_20240901-220906/^C[?2004l[?2004h[?2004l
+[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ python3 runs/Dec12.py Sep4_s2s_cluelessyolo[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Krm -rf /huge/deep/runs/run_Sep10[K[K
+run_Sep1-middleschooler_20240901-220906/   run_Sep4-cirrus-honda_20240904-164054/     run_Sep4-johnsblundering_20240904-114448/  run_Sep4-s2s-stupidyolo_20240904-112227/   run_Sep6-yamaha-bigsad_20240907-212316/    
+run_Sep2-apkid_20240902-213334/            run_Sep4-cloudmaster_20240830-012345/      run_Sep4-s2s-cluelessyolo_20240910-152319/ run_Sep6-yamaha-bigsad_20240907-212106/    run_Sep7-doctorate_20240907-113206/        
+[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ rm -rf /huge/deep/runs/run_Sep^C[?2004l[?2004h[?2004l
+[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ python3 runs/Dec12.py Sep4_s2s_cluelessyolo[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[26Pvi runs/Dec12.py 
+[?2004l[?1049h[22;0;0t[>4;2m[?1h=[?2004h[?1004h[1;74r[?12h[?12l[22;2t[22;1t[27m[29m[m[H[2J[?25l[74;1H"runs/Dec12.py" 2833L, 136293B[2;1H▽[6n[2;1H  [3;1HPzz\[0%m[6n[3;1H           [1;1H[>c]10;?]11;?[1;5Hextra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m]
+    extra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m][2;79H[K[3;1H    extra_all = extra_in_out + extra_out_only[3;46H[K[4;5Himesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    omesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    timesteps = [[31m6[m, [31m24[m, [31m36[m]
+    data = NeoWeatherDataset(NeoDataConfig(inputs=[imesh], outputs=[omesh],[8;44Htimesteps=timesteps, max_ram_manual=[36mint[m([31m8e9[m),[9;44Hmax_instance_queue_size=[31m6[m,[10;44Hworker_complain = [36mFalse[m,[11;44Hrequested_dates = tdates[12;44H))
+    model = ForecastStep3D([14;9HForecastStepConfig([15;13Hdata.config.inputs,[16;13Houtputs=data.config.outputs,[17;13Hsincos=[36mTrue[m,[18;13Hpadded_lon=[36mTrue[m,[19;13HTransformer=SlideLayer3D,[20;13Hcheckpointfn=matepoint.checkpoint,[21;13Hpatch_size=([31m5[m,[31m8[m,[31m8[m),[22;13Hhidden_dim=[31m1536[m, [34m#1408, [m[23;13Henc_swin_depth=[31m6[m,[24;13Hdec_swin_depth=[31m6[m,[25;13Hproc_swin_depth=[31m6[m,[26;13Htimesteps=timesteps,[27;13Hdims_per_head=[31m32[m,[28;13Hprocessor_dt=[31m3[m,[29;13Houtput_deltas=[36mFalse[m,[30;13Hdecoder_reinput_initial=[36mFalse[m,[31;13Hneorad=[36mTrue[m,[32;9Hwindow_size=([31m3[m,[31m5[m,[31m7[m)))[34;5Hconfig.HALF = [36mTrue[m
+    config.ignore_train_safegaurd = [36mTrue[m
+    config.validate_every = -[31m1[m
+    config.DH = [31m24[m
+    config.validate_N = [31m8[m
+    config.log_every = [31m25[m
+    config.save_every = [31m100[m
+    config.optim = [31m'shampoo'[m
+    config.shampoo.dim = [31m2048[m
+    [34m#config.optim = 'adam'[m
+    config.reset_optimizer = [36mFalse[m
+    config.lr_sched = SimpleNamespace()
+    config.lr_sched.cosine_en = [36mTrue[m
+    config.lr_sched.cosine_period = 45_000
+    config.lr_sched.cosine_bottom = [31m5e-8[m
+    config.lr_sched.warmup_end_step = [31m1000[m
+    config.lr_sched.div_factor= [31m4[m
+    config.lr_sched.restart_warmup_end_step = [31m100[m
+    [34m# Scaling by sqrt(3) now that we're using [m
+    config.lr_sched.lr = [31m0.3e-3[m
+    config.adam = SimpleNamespace()
+    config.adam.betas = ([31m0.9[m, [31m0.99[m)
+    config.adam.weight_decay = [31m0.001[m
+    config.lr_sched.step_offset = [31m0[m
+    config.loss_consts = {[31m48[m: [31m0.3[m, [31m24[m: [31m1.0[m, [31m6[m: [31m1.0[m, [31m3[m: [31m1.0[m, [31m36[m: [31m0.25[m}
+    config.dates = tdates
+    w = WeatherTrainer(conf=config,model=model,data=data)
+    w.run()
+
+[34m#@launch(ddp=0)[m
+[35m@[m[36mlaunch[m(nodes={[31m'bimini'[m: [31m5[m},port=[31m29505[m, start_method=[31m"spawn"[m)[34m#, zulip=True, ping='@**John Dean**',validate=False,kill_nvidia=True)[m
+[38;5;130mdef[m [36mSep4_s2s_cluelessyolo[m():
+    [34m#config.gpus = '0-2'
+[m    [34m#config.resume = "_"+config.activity.replace("_","-")+"_"
+[m    [34m#config.nope = True[m
+    tdates = get_dates([(D([31m1979[m, [31m1[m, [31m23[m), D([31m2019[m, [31m12[m, [31m28[m)), (D([31m2021[m, [31m2[m, [31m1[m), D([31m2024[m, [31m5[m, [31m1[m))])
+    extra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m]
+    extra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m]
+    extra_all = extra_in_out + extra_out_only
+    imesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)[74;255H88,5[11C0%[68;5H[?25h[?25l[74;245H:[68;5H[74;1H[K[74;1H:[?25hq[?25l[?2004l[>4;m[23;2t[23;1t[74;1H[K[74;1H[?1004l[?2004l[?1l>[?25h[>4;m[?1049l[23;0;0t[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ vi runs/Dec12.py python3 runs/Dec12.py Sep4_s2s_cluelessyolo[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[26Pvi runs/Dec12.py [Krm -rf /huge/deep/p[Kruns/run_Sep4-
+run_Sep4-cirrus-honda_20240904-164054/     run_Sep4-cloudmaster_20240830-012345/      run_Sep4-johnsblundering_20240904-114448/  run_Sep4-s2s-cluelessyolo_20240910-152319/ run_Sep4-s2s-stupidyolo_20240904-112227/   
+[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ rm -rf /huge/deep/runs/run_Sep4-cloudmaster_20240830-012345/[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[Ks2s-cluelessyolo_20240910-152319/
+[?2004l[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ rm -rf /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cvi runs/Dec12.py [K
+[?2004l[?1049h[22;0;0t[>4;2m[?1h=[?2004h[?1004h[1;74r[?12h[?12l[22;2t[22;1t[27m[29m[m[H[2J[?25l[74;1H"runs/Dec12.py" 2833L, 136293B[2;1H▽[6n[2;1H  [3;1HPzz\[0%m[6n[3;1H           [1;1H[>c]10;?]11;?[1;5Hextra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m]
+    extra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m][2;79H[K[3;1H    extra_all = extra_in_out + extra_out_only[3;46H[K[4;5Himesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    omesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    timesteps = [[31m6[m, [31m24[m, [31m36[m]
+    data = NeoWeatherDataset(NeoDataConfig(inputs=[imesh], outputs=[omesh],[8;44Htimesteps=timesteps, max_ram_manual=[36mint[m([31m8e9[m),[9;44Hmax_instance_queue_size=[31m6[m,[10;44Hworker_complain = [36mFalse[m,[11;44Hrequested_dates = tdates[12;44H))
+    model = ForecastStep3D([14;9HForecastStepConfig([15;13Hdata.config.inputs,[16;13Houtputs=data.config.outputs,[17;13Hsincos=[36mTrue[m,[18;13Hpadded_lon=[36mTrue[m,[19;13HTransformer=SlideLayer3D,[20;13Hcheckpointfn=matepoint.checkpoint,[21;13Hpatch_size=([31m5[m,[31m8[m,[31m8[m),[22;13Hhidden_dim=[31m1536[m, [34m#1408, [m[23;13Henc_swin_depth=[31m6[m,[24;13Hdec_swin_depth=[31m6[m,[25;13Hproc_swin_depth=[31m6[m,[26;13Htimesteps=timesteps,[27;13Hdims_per_head=[31m32[m,[28;13Hprocessor_dt=[31m3[m,[29;13Houtput_deltas=[36mFalse[m,[30;13Hdecoder_reinput_initial=[36mFalse[m,[31;13Hneorad=[36mTrue[m,[32;9Hwindow_size=([31m3[m,[31m5[m,[31m7[m)))[34;5Hconfig.HALF = [36mTrue[m
+    config.ignore_train_safegaurd = [36mTrue[m
+    config.validate_every = -[31m1[m
+    config.DH = [31m24[m
+    config.validate_N = [31m8[m
+    config.log_every = [31m25[m
+    config.save_every = [31m100[m
+    config.optim = [31m'shampoo'[m
+    config.shampoo.dim = [31m2048[m
+    [34m#config.optim = 'adam'[m
+    config.reset_optimizer = [36mFalse[m
+    config.lr_sched = SimpleNamespace()
+    config.lr_sched.cosine_en = [36mTrue[m
+    config.lr_sched.cosine_period = 45_000
+    config.lr_sched.cosine_bottom = [31m5e-8[m
+    config.lr_sched.warmup_end_step = [31m1000[m
+    config.lr_sched.div_factor= [31m4[m
+    config.lr_sched.restart_warmup_end_step = [31m100[m
+    [34m# Scaling by sqrt(3) now that we're using [m
+    config.lr_sched.lr = [31m0.3e-3[m
+    config.adam = SimpleNamespace()
+    config.adam.betas = ([31m0.9[m, [31m0.99[m)
+    config.adam.weight_decay = [31m0.001[m
+    config.lr_sched.step_offset = [31m0[m
+    config.loss_consts = {[31m48[m: [31m0.3[m, [31m24[m: [31m1.0[m, [31m6[m: [31m1.0[m, [31m3[m: [31m1.0[m, [31m36[m: [31m0.25[m}
+    config.dates = tdates
+    w = WeatherTrainer(conf=config,model=model,data=data)
+    w.run()
+
+[34m#@launch(ddp=0)[m
+[35m@[m[36mlaunch[m(nodes={[31m'bimini'[m: [31m5[m},port=[31m29505[m, start_method=[31m"spawn"[m)[34m#, zulip=True, ping='@**John Dean**',validate=False,kill_nvidia=True)[m
+[38;5;130mdef[m [36mSep4_s2s_cluelessyolo[m():
+    [34m#config.gpus = '0-2'
+[m    [34m#config.resume = "_"+config.activity.replace("_","-")+"_"
+[m    [34m#config.nope = True[m
+    tdates = get_dates([(D([31m1979[m, [31m1[m, [31m23[m), D([31m2019[m, [31m12[m, [31m28[m)), (D([31m2021[m, [31m2[m, [31m1[m), D([31m2024[m, [31m5[m, [31m1[m))])
+    extra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m]
+    extra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m]
+    extra_all = extra_in_out + extra_out_only
+    imesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)[74;255H88,5[11C0%[68;5H[?25h[?25l[74;245H~@k[68;5H[74;245H   [67;5H[74;256H7[67;5H[?25h[?25l[74;245H~@k[67;5H[74;245H   [66;5H[74;256H6[66;5H[?25h[?25l[74;245H~@k[66;5H[74;245H   [65;5H[74;256H5[65;5H[?25h[?25l[74;245H~@k[65;5H[74;245H   [64;5H[74;256H4[64;5H[?25h[?25l[74;245Hf[64;5H[?25h[?25l[74;245H [64;5H[?25h[?25l[74;245Hf[64;5H[?25h[?25l[74;245H [64;5H[?25h[?25l[74;245Hf[64;5H[?25h[?25l[74;245H [64;5H[?25h[?25l[74;245Hf[64;5H[?25h[?25l[74;246H~@k[64;5H[74;245H    [64;5H[?25h[?25l[74;245H/[64;5H[74;1H[K[74;1H/[?25hz[?25l[64;65H[7m[34mz[m[74;255H84,65[10C0%[74;255H[K[74;3H[?25hu[?25l[64;66H[7m[34mu[m[74;255H84,65[10C0%[74;255H[K[74;4H[?25h[?25l[64;65H[34mzu[m[74;255H84,65[10C0%[64;65H[?25h[?25l[74;245H~@k[64;65H[74;245H   [64;64H[74;259H4[64;64H[?25h[?25l[74;245H~@k[64;64H[74;245H   [64;63H[74;259H3[64;63H[?25h[?25l[74;245Ha[64;63H[74;245H [64;64H[74;1H[1m-- INSERT --[m[74;255H[K[74;255H84,64[10C0%[64;64H[?25h[?25l[74;259H3[64;63H[?25h[?25l, zulip=[36mTrue[m, ping=[31m'@**John Dean**'[m,validate=[36mFalse[m,kill_nvidia=[36mTrue[m)[64;130H[K[64;8H[106m([52C)[m[74;259H2[64;62H[?25h[?25l[106m,[m zulip=[36mTrue[m, ping=[31m'@**John Dean**'[m,validate=[36mFalse[m,kill_nvidia=[36mTrue[m)[64;129H[K[64;8H([52C,[74;259H1[64;61H[?25h[74;1H[K[64;60H[?25l[74;245H^[[64;60H[74;245H  [64;61H[74;255H84,60[10C0%[64;60H[?25h[?25l[74;245H~@k[64;60H[74;245H   [64;61H[74;259H1[64;61H[?25h[?25l[74;245H~@k[64;61H[74;245H   [64;62H[74;259H2[64;62H[?25h[?25l[74;245H~@k[64;62H[74;245H   [64;63H[74;259H3[64;63H[?25h[?25l[74;245H~@k[64;63H[74;245H   [64;64H[74;259H4[64;64H[?25h[?25l[74;245H~@k[64;64H[74;245H   [64;65H[74;259H5[64;65H[?25h[?25l[74;245H~@k[64;65H[74;245H   [64;66H[74;259H6[64;66H[?25h[?25l[74;245H~@k[64;66H[74;245H   [64;67H[74;259H7[64;67H[?25h[?25l[74;245H~@k[64;67H[74;245H   [64;68H[74;259H8[64;68H[?25h[?25l[74;245H~@k[64;68H[74;245H   [64;69H[74;259H9[64;69H[?25h[?25l[74;245H~@k[64;69H[74;245H   [64;70H[74;258H70[64;70H[?25h[?25l[74;245H~@k[64;70H[74;245H   [64;71H[74;259H1[64;71H[?25h[?25l[74;245H~@k[64;71H[74;245H   [64;72H[74;259H2[64;72H[?25h[?25l[74;245H~@k[64;72H[74;245H   [64;73H[74;259H3[64;73H[?25h[?25l[74;245H~@k[64;73H[74;245H   [64;74H[74;259H4[64;74H[?25h[?25l[74;245H~@k[64;74H[74;245H   [64;75H[74;259H5[64;75H[?25h[?25l[74;245H~@k[64;75H[74;245H   [64;76H[74;259H6[64;76H[?25h[?25l[74;245H~@k[64;76H[74;245H   [64;77H[74;259H7[64;77H[?25h[?25l[74;245H~@k[64;77H[74;245H   [64;78H[74;259H8[64;78H[?25h[?25l[74;245H~@k[64;78H[74;245H   [64;79H[74;259H9[64;79H[?25h[?25l[74;245H~@k[64;79H[74;245H   [64;80H[74;258H80[64;80H[?25h[?25l[74;245H~@k[64;80H[74;245H   [64;81H[74;259H1[64;81H[?25h[?25l[74;245H~@k[64;81H[74;245H   [64;82H[74;259H2[64;82H[?25h[?25l[74;245H~@k[64;82H[74;245H   [64;83H[74;259H3[64;83H[?25h[?25l[74;245H~@k[64;83H[74;245H   [64;84H[74;259H4[64;84H[?25h[?25l[74;245H~@k[64;84H[74;245H   [64;85H[74;259H5[64;85H[?25h[?25l[74;245H~@k[64;85H[74;245H   [64;86H[74;259H6[64;86H[?25h[?25l[74;245H~@k[64;86H[74;245H   [64;87H[74;259H7[64;87H[?25h[?25l[74;245H~@k[64;87H[74;245H   [64;88H[74;259H8[64;88H[?25h[?25l[74;245H~@k[64;88H[74;245H   [64;89H[74;259H9[64;89H[?25h[?25l[74;245H~@k[64;89H[74;245H   [64;90H[74;258H90[64;90H[?25h[?25l[74;245H~@k[64;90H[74;245H   [64;91H[74;259H1[64;91H[?25h[?25l[74;245H~@k[64;91H[74;245H   [64;92H[74;259H2[64;92H[?25h[?25l[74;245H~@k[64;92H[74;245H   [64;93H[74;259H3[64;93H[?25h[?25l[74;245H~@k[64;93H[74;245H   [64;94H[74;259H4[64;94H[?25h[?25l[74;245H~@k[64;94H[74;245H   [64;95H[74;259H5[64;95H[?25h[?25l[74;245H~@k[64;95H[74;245H   [64;96H[74;259H6[64;96H[?25h[?25l[74;245H~@k[64;96H[74;245H   [64;97H[74;259H7[64;97H[?25h[?25l[74;245H~@k[64;97H[74;245H   [64;98H[74;259H8[64;98H[?25h[?25l[74;245H~@k[64;98H[74;245H   [64;99H[74;259H9[64;99H[?25h[?25l[74;245H~@k[64;99H[74;245H   [64;100H[74;258H100[64;100H[?25h[?25l[74;245H~@k[64;100H[74;245H   [64;101H[74;260H1[64;101H[?25h[?25l[74;245H~@k[64;101H[74;245H   [64;102H[74;260H2[64;102H[?25h[?25l[74;245H~@k[64;102H[74;245H   [64;103H[74;260H3[64;103H[?25h[?25l[74;245H~@k[64;103H[74;245H   [64;104H[74;260H4[64;104H[?25h[?25l[74;245H~@k[64;104H[74;245H   [64;105H[74;260H5[64;105H[?25h[?25l[74;245H~@k[64;105H[74;245H   [64;106H[74;260H6[64;106H[?25h[?25l[74;245H~@k[64;106H[74;245H   [64;107H[74;260H7[64;107H[?25h[?25l[74;245H~@k[64;107H[74;245H   [64;108H[74;260H8[64;108H[?25h[?25l[74;245H~@k[64;108H[74;245H   [64;109H[74;260H9[64;109H[?25h[?25l[74;245H~@k[64;109H[74;245H   [64;110H[74;259H10[64;110H[?25h[?25l[74;245Ha[64;110H[74;245H [64;111H[74;1H[1m-- INSERT --[m[74;255H[K[74;255H84,111[9C0%[64;111H[?25h[?25l),kill_nvidia=[36mTrue[m)[64;8H[106m([102C)[m[74;260H2[64;112H[?25h[?25l[34m#,kill_nvidia=True)[m[64;8H([102C)[74;260H3[64;113H[?25h[74;1H[K[64;112H[?25l[74;245H^[[64;112H[74;245H  [64;113H[74;255H84,112[9C0%[64;112H[?25h[?25l[74;245H:[64;112H[74;245H[K[74;1H:[?25hwq[?25l[?2004l[>4;m"runs/Dec12.py"^[OA^[OA:wq' 
+ 2833L, 136293B written[23;2t[23;1t
+[?1004l[?2004l[?1l>[?25h[>4;m[?1049l[23;0;0t[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ vi runs/Dec12.py rm -rf /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/:wq
+[?2004l[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ rm -rf /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/:wq[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cvi runs/Dec12.py [K
+[?2004l[?1049h[22;0;0t[>4;2m[?1h=[?2004h[?1004h[1;74r[?12h[?12l[22;2t[22;1t[27m[29m[m[H[2J[?25l[74;1H"runs/Dec12.py" 2833L, 136293B[2;1H▽[6n[2;1H  [3;1HPzz\[0%m[6n[3;1H           [1;1H[>c]10;?]11;?[1;5Hconfig.disregard_buffer_checksum = [36mFalse[m[34m#True[m
+    [34m#config.nope = True[m[2;24H[K[3;1H    [34m# tdates = get_dates([(D(1979, 1, 23), D(2019, 12, 28)), (D(2021, 2, 1), D(2022, 7, 1))])[m[3;94H[K[4;5Htdates = get_dates([(D([31m1979[m, [31m1[m, [31m23[m), D([31m2019[m, [31m12[m, [31m28[m)), (D([31m2021[m, [31m2[m, [31m1[m), D([31m2024[m, [31m5[m, [31m1[m))])
+    extra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m]
+    extra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m]
+    extra_all = extra_in_out + extra_out_only
+    imesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    omesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)
+    timesteps = [[31m6[m, [31m24[m, [31m36[m]
+    data = NeoWeatherDataset(NeoDataConfig(inputs=[imesh], outputs=[omesh],[12;44Htimesteps=timesteps, max_ram_manual=[36mint[m([31m8e9[m),[13;44Hmax_instance_queue_size=[31m6[m,[14;44Hworker_complain = [36mFalse[m,[15;44Hrequested_dates = tdates[16;44H))
+    model = ForecastStep3D([18;9HForecastStepConfig([19;13Hdata.config.inputs,[20;13Houtputs=data.config.outputs,[21;13Hsincos=[36mTrue[m,[22;13Hpadded_lon=[36mTrue[m,[23;13HTransformer=SlideLayer3D,[24;13Hcheckpointfn=matepoint.checkpoint,[25;13Hpatch_size=([31m5[m,[31m8[m,[31m8[m),[26;13Hhidden_dim=[31m1536[m, [34m#1408, [m[27;13Henc_swin_depth=[31m6[m,[28;13Hdec_swin_depth=[31m6[m,[29;13Hproc_swin_depth=[31m6[m,[30;13Htimesteps=timesteps,[31;13Hdims_per_head=[31m32[m,[32;13Hprocessor_dt=[31m3[m,[33;13Houtput_deltas=[36mFalse[m,[34;13Hdecoder_reinput_initial=[36mFalse[m,[35;13Hneorad=[36mTrue[m,[36;9Hwindow_size=([31m3[m,[31m5[m,[31m7[m)))[38;5Hconfig.HALF = [36mTrue[m
+    config.ignore_train_safegaurd = [36mTrue[m
+    config.validate_every = -[31m1[m
+    config.DH = [31m24[m
+    config.validate_N = [31m8[m
+    config.log_every = [31m25[m
+    config.save_every = [31m100[m
+    config.optim = [31m'shampoo'[m
+    config.shampoo.dim = [31m2048[m
+    [34m#config.optim = 'adam'[m
+    config.reset_optimizer = [36mFalse[m
+    config.lr_sched = SimpleNamespace()
+    config.lr_sched.cosine_en = [36mTrue[m
+    config.lr_sched.cosine_period = 45_000
+    config.lr_sched.cosine_bottom = [31m5e-8[m
+    config.lr_sched.warmup_end_step = [31m1000[m
+    config.lr_sched.div_factor= [31m4[m
+    config.lr_sched.restart_warmup_end_step = [31m100[m
+    [34m# Scaling by sqrt(3) now that we're using [m
+    config.lr_sched.lr = [31m0.3e-3[m
+    config.adam = SimpleNamespace()
+    config.adam.betas = ([31m0.9[m, [31m0.99[m)
+    config.adam.weight_decay = [31m0.001[m
+    config.lr_sched.step_offset = [31m0[m
+    config.loss_consts = {[31m48[m: [31m0.3[m, [31m24[m: [31m1.0[m, [31m6[m: [31m1.0[m, [31m3[m: [31m1.0[m, [31m36[m: [31m0.25[m}
+    config.dates = tdates
+    w = WeatherTrainer(conf=config,model=model,data=data)
+    w.run()
+
+[34m#@launch(ddp=0)[m
+[35m@[m[36mlaunch[m(nodes={[31m'bimini'[m: [31m5[m},port=[31m29505[m, start_method=[31m"spawn"[m, zulip=[36mTrue[m, ping=[31m'@**John Dean**'[m,validate=[36mFalse[m)[34m#,kill_nvidia=True)[m
+[38;5;130mdef[m [36mSep4_s2s_cluelessyolo[m():
+    [34m#config.gpus = '0-2'
+[m    [34m#config.resume = "_"+config.activity.replace("_","-")+"_"
+[m    [34m#config.nope = True[m
+    tdates = get_dates([(D([31m1979[m, [31m1[m, [31m23[m), D([31m2019[m, [31m12[m, [31m28[m)), (D([31m2021[m, [31m2[m, [31m1[m), D([31m2024[m, [31m5[m, [31m1[m))])[74;255H84,112[9C0%[68;112H[?25h[?25l[74;245H:[68;112H[74;1H[K[74;1H:[?25hQ[?25l[97m[41mE492: Not an editor command: Q[68;112H[m[74;255H84,112[9C0%[68;112H[?25h[?25l[74;245H~@k[68;112H[74;245H   [68;28H[1;73r[73;1H
+[1;74r[73;5Hextra_in_out = [[31m'15_msnswrf'[m, [31m'45_tcc'[m, [31m'034_sstk'[m, [31m'168_2d'[m, [31m'142_lsp'[m, [31m'143_cp'[m, [31m'201_mx2t'[m, [31m'202_mn2t'[m][74;1H[K[74;255H85,28[10C0%[68;28H[?25h[?25l[74;245H~@k[68;28H[74;245H   [68;24H[1;73r[73;1H
+[1;74r[73;5Hextra_out_only = [[31m'142_lsp-6h'[m, [31m'143_cp-6h'[m, [31m'201_mx2t-6h'[m, [31m'202_mn2t-6h'[m][74;255H[K[74;255H86,24[10C0%[68;24H[?25h[?25l[74;245H~@k[68;24H[74;245H   [68;61H[1;73r[73;1H
+[1;74r[73;5Hextra_all = extra_in_out + extra_out_only[74;255H[K[74;255H87,61[10C0%[68;61H[?25h[?25l[74;245H~@k[68;61H[74;245H   [68;23H[1;73r[73;1H
+[1;74r[73;5Himesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)[74;255H[K[74;255H88,23[10C0%[68;23H[?25h[?25l[74;245H~@k[68;23H[74;245H   [68;91H[1;73r[73;1H
+[1;74r[68;23H[106m([67C)[m[73;5Homesh = meshes.LatLonGrid(WEATHERBENCH=[31m1[m, CLOUD=[31m0[m,source=[31m'era5-28'[m,extra_sfc_vars=extra_all, output_only_vars=extra_out_only, input_levels=levels_medium, levels=levels_joank)[74;255H[K[74;255H89,91[10C0%[68;91H[?25h[?25l[74;245H~@k[68;91H[74;245H   [68;110H[1;73r[73;1H
+[1;74r[67;23H([67C)[68;20H[106m[[89C][m[73;5Htimesteps = [[31m24[m,[31m24[m*[31m6[m,[31m24[m*[31m12[m,[31m24[m*[31m24[m][74;255H[K[74;255H90,110[9C0%[68;110H[?25h[?25l[1;73r[73;1H
+[1;74r[67;20H[[89C][68;22H[106m[[55C][m[73;5H[34m#timesteps = [1,3,6,9][m[74;255H[K[74;255H91,78[10C0%[68;78H[?25h[?25l[74;245H~@k[68;78H[74;245H   [68;45H[1;73r[73;1H
+[1;74r[67;22H[[55C][73;5Hdata = NeoWeatherDataset(NeoDataConfig(inputs=[imesh], outputs=[omesh],[74;255H[K[74;255H92,45[10C0%[68;45H[?25h[?25l[1;73r[73;1H
+[1;74r[73;44Htimesteps=timesteps, max_ram_manual=[36mint[m([31m12e9[m),[74;255H[K[74;255H93,112[9C0%[68;112H[?25h[?25l[74;245H~@k[68;112H[74;245H   [68;112H[1;73r[73;1H
+[1;74r[73;44Hworker_complain = [36mFalse[m,[74;255H[K[74;255H94,112[9C0%[68;112H[?25h[?25l[1;73r[73;1H
+[1;74r[68;17H[106m[[19C][m[73;44Hrequested_dates = tdates,[74;255H[K[74;255H95,37[10C0%[68;37H[?25h[?25l[74;245H~@k[68;37H[74;245H   [68;26H[1;73r[73;1H
+[1;74r[67;17H[[19C][68;18H[34m[106m[[7C][m[73;44Honly_at_z = [36mlist[m([36mrange[m([31m0[m,[31m24[m,[31m3[m))[74;255H[K[74;255H96,26[10C1%[68;26H[?25h[?25l[1;73r[73;1H
+[1;74r[67;18H[34m[[7C][m[73;44H))[74;255H[K[74;255H97,75[10C1%[68;75H[?25h[?25l[74;245H~@k[68;75H[74;245H   [68;89H[1;73r[73;1H
+[1;74r[73;5Hmodel = ForecastStep3D([74;255H[K[74;255H98,89[10C1%[68;89H[?25h[?25l[1;73r[73;1H
+[1;74r[73;9HForecastStepConfig([74;255H[K[74;255H99,67[10C1%[68;67H[?25h[?25l[74;245H~@k[68;67H[74;245H   [68;68H[1;73r[73;1H
+[1;74r[73;13Hdata.config.inputs,[74;255H[K[74;255H100,68[9C1%[68;68H[?25h[?25l[1;73r[73;1H
+[1;74r[68;60H[106m([13C)[m[73;13Houtputs=data.config.outputs,[74;255H[K[74;255H101,74[9C1%[68;74H[?25h[?25l[74;245H~@k[68;74H[74;245H   [68;45H[1;73r[73;1H
+[1;74r[63;29H[106m([m[67;60H([13C)[68;45H[106m)[m[73;13Hsincos=[36mTrue[m,[74;255H[K[74;255H102,45[9C1%[68;45H[?25h[?25l[1;73r[73;1H
+[1;74r[62;29H([67;45H)[73;13Hpadded_lon=[36mTrue[m,[74;255H[K[74;255H103,27[9C1%[68;27H[?25h[?25l[74;245H~@k[68;27H[74;245H   [68;27H[1;73r[73;1H
+[1;74r[73;13Houtput_deltas=[36mFalse[m,[74;255H[K[74;255H104,27[9C1%[68;27H[?25h[?25l[1;73r[73;1H
+[1;74r[73;13HTransformer=SlideLayer3D,[74;255H[K[74;255H105,32[9C1%[68;32H[?25h[?25l[74;245H~@k[68;32H[74;245H   [68;41H[1;73r[73;1H
+[1;74r[73;13Hcheckpointfn=matepoint.checkpoint,[74;255H[K[74;255H106,41[9C1%[68;41H[?25h[?25l[1;73r[73;1H
+[1;74r[73;13Hpatch_size=([31m5[m,[31m16[m,[31m16[m),[74;255H[K[74;255H107,25[9C1%[68;25H[?25h[?25l[74;245H~@k[68;25H[74;245H   [68;28H[1;73r[73;1H
+[1;74r[73;13Hhidden_dim=[31m1280[m, [34m#1536, [m[74;255H[K[74;255H108,28[9C1%[68;28H[?25h[?25l[1;73r[73;1H
+[1;74r[73;13Henc_swin_depth=[31m8[m,[74;255H[K[74;255H109,33[9C1%[68;33H[?25h[?25l[74;245H~@k[68;33H[74;245H   [68;38H[1;73r[73;1H
+[1;74r[73;13Hdec_swin_depth=[31m8[m,[74;255H[K[74;255H110,38[9C1%[68;38H[?25h[?25l[74;245H~@k[68;38H[74;245H   [68;46H[1;73r[73;1H
+[1;74r[73;13Hproc_swin_depth=[31m8[m,[74;255H[K[74;255H111,46[9C1%[68;46H[?25h[?25l[1;73r[73;1H
+[1;74r[73;13Htimesteps=timesteps,[74;255H[K[74;255H112,34[9C1%[68;34H[?25h[?25l[74;245H~@k[68;34H[74;245H   [68;36H[1;73r[73;1H
+[1;74r[73;13Hdims_per_head=[31m32[m,[74;255H[K[74;255H113,36[9C1%[68;36H[?25h[?25l[74;245H~@k[68;36H[74;245H   [68;30H[1;73r[73;1H
+[1;74r[73;13Hprocessor_dt=[31m24[m,[74;255H[K[74;255H114,30[9C1%[68;30H[?25h[?25l[74;245H~@k[68;30H[74;245H   [68;30H[1;73r[73;1H
+[1;74r[73;13Hneorad=[36mTrue[m,[74;255H[K[74;255H115,30[9C1%[68;30H[?25h[?25l[74;245H~@k[68;30H[74;245H   [68;31H[1;73r[73;1H
+[1;74r[73;9Hwindow_size=([31m3[m,[31m5[m,[31m7[m)))[74;255H[K[74;255H116,31[9C1%[68;31H[?25h[?25l[74;245H~@k[68;31H[74;245H   [68;33H[1;73r[73;1H
+[1;74r[74;255H[K[74;255H117,33[9C1%[68;33H[?25h[?25l[74;245H~@k[68;33H[74;245H   [68;30H[1;73r[73;1H
+[1;74r[73;5H[38;5;130myield[m model[74;255H[K[74;255H118,30[9C1%[68;30H[?25h[?25l[74;245H~@k[68;30H[74;245H   [68;29H[1;73r[73;1H
+[1;74r[73;5Hconfig.loss_consts = {[31m24[m: [31m1.0[m, [31m24[m*[31m6[m: [31m1[m, [31m24[m*[31m12[m: [31m0.5[m, [31m24[m*[31m24[m: [31m0.25[m}[74;255H[K[74;255H119,29[9C1%[68;29H[?25h[?25l[74;245H~@k[68;29H[74;245H   [67;30H[74;257H8,30[67;30H[?25h[?25l[74;245H~@k[67;30H[74;245H   [66;33H[74;257H7,33[66;33H[?25h[?25l[74;245H~@k[66;33H[74;245H   [65;31H[74;257H6,31[65;31H[?25h[?25l[74;245H~@k[65;31H[74;245H   [64;30H[74;257H5,30[64;30H[?25h[?25l[74;245H~@k[64;30H[74;245H   [63;30H[74;257H4[63;30H[?25h[?25l[74;245H~@k[63;30H[74;245H   [62;36H[74;257H3,36[62;36H[?25h[?25l[74;245H~@k[62;36H[74;245H   [61;34H[74;257H2,34[61;34H[?25h[?25l[74;245H~@k[61;34H[74;245H   [60;46H[74;257H1,46[60;46H[?25h[?25l[74;245H~@k[60;46H[74;245H   [61;34H[74;257H2,34[61;34H[?25h[?25l[74;245H~@k[61;34H[74;245H   [62;36H[74;257H3,36[62;36H[?25h[?25l[74;245HA[62;36H[74;245H [62;37H[74;1H[1m-- INSERT --[m[74;255H[K[74;255H113,37[9C1%[62;37H[?25h[?25l[74;260H6[62;36H[?25h[?25l[74;260H4[62;34H[?25h[?25l[74;260H2[62;32H[?25h[?25l[74;260H1[62;31H[?25h[?25l[31m1536[m, [62;36H[K[74;260H0[62;30H[?25h[?25l[31m1536[m, [74;259H29[62;29H[?25h[?25l[31m1536[m, [74;260H8[62;28H[?25h[?25l[31m1536[m, [74;260H7[62;27H[?25h[?25l[31m1536[m, [74;260H6[62;26H[?25h[?25l[31m1536[m, [74;260H5[62;25H[?25h[?25l[31m536[m, [74;260H4[62;24H[?25h[74;1H[K[62;23H[?25l[74;245H^[[62;23H[74;245H  [62;24H[74;255H113,23[9C1%[62;23H[?25h[?25l[74;245H:[62;23H[74;245H[K[74;1H:[?25hWQ[?25l[97m[41mE492: Not an editor command: WQ[62;23H[m[74;255H113,23[9C1%[62;23H[?25h[?25l[74;245H:[62;23H[74;1H[K[74;1H:[?25hwq[?25l[?2004l[>4;m"runs/Dec12.py" 2833L, 136286B written[23;2t[23;1t
+[?1004l[?2004l[?1l>[?25h[>4;m[?1049l[23;0;0t[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ vi runs/Dec12.py rm -rf /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/:wq[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cvi runs/Dec12.py [Krm -rf /huge/deep/runs/run_Sep4-s2s-cluelessyolo_20240910-152319/[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cvi runs/Dec12.py [Kpython3 runs/Dec12.py Sep4_s2s_cluelessyolo[K[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ python3 runs/Dec12.py Sep4_s2s_cluelessyolo[K[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ python3 runs/Dec12.py Sep4_s2s_cluelessyolo[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[26Pvi runs/Dec12.py ^C[?2004l[?2004h[?2004l
+[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ lsg
+[?2004lstinson
+0 %, 1 MiB, 20.37 W
+0 %, 1 MiB, 14.65 W
+0 %, 1 MiB, 30.25 W
+0 %, 1 MiB, 27.65 W
+halfmoon
+0 %, 14 MiB, 27.26 W
+barceloneta
+100 %, 22755 MiB, 327.92 W
+100 %, 22815 MiB, 330.98 W
+100 %, 22239 MiB, 331.15 W
+100 %, 23031 MiB, 341.54 W
+100 %, 23033 MiB, 332.42 W
+97 %, 23031 MiB, 320.00 W
+singing
+0 %, 11 MiB, 28.51 W
+0 %, 11 MiB, 27.76 W
+0 %, 11 MiB, 29.27 W
+0 %, 11 MiB, 28.42 W
+0 %, 11 MiB, 23.48 W
+0 %, 11 MiB, 21.70 W
+miramar
+100 %, 22755 MiB, 338.77 W
+97 %, 22815 MiB, 338.03 W
+97 %, 22239 MiB, 337.16 W
+100 %, 23031 MiB, 342.96 W
+100 %, 23033 MiB, 338.68 W
+97 %, 23031 MiB, 328.62 W
+bimini
+0 %, 5223 MiB, 32.24 W
+0 %, 5223 MiB, 33.20 W
+0 %, 5563 MiB, 24.46 W
+0 %, 5163 MiB, 32.92 W
+0 %, 7425 MiB, 33.92 W
+0 %, 7425 MiB, 20.65 W
+baga
+100 %, 13927 MiB, 305.85 W
+100 %, 13869 MiB, 314.80 W
+100 %, 13493 MiB, 321.90 W
+100 %, 13767 MiB, 275.66 W
+100 %, 15849 MiB, 332.75 W
+21 %, 15849 MiB, 297.60 W
+muir
+100 %, 21739 MiB, 337.79 W
+100 %, 21219 MiB, 322.24 W
+100 %, 21279 MiB, 333.48 W
+100 %, 21279 MiB, 335.78 W
+100 %, 21239 MiB, 341.23 W
+100 %, 21239 MiB, 336.43 W
+ssh: Could not resolve hostname cirrus: Temporary failure in name resolution
+[?2004h[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ [K[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ [K[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ [K[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ [K[01;32mwindborne@bimini[00m:[01;34m/fast/djohn[00m$ 

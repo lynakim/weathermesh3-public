@@ -1,0 +1,14 @@
+[Unit]
+Description="dlnwp_rt"
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=ubuntu
+WorkingDirectory=/home/ubuntu/dlnwp_rt
+ExecStart=bash realtime/run.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+netCDF4
+numpy
+icosphere
+tqdm
+ecmwf-api-client
+scipy
+tensorboard
+GPUtil
+einops
+pytorch_memlab
+timm
+xarray
+zarr
+gcsfs
+psutil
+pygrib
+matplotlib

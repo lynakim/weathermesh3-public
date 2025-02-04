@@ -1,0 +1,73 @@
+<html>
+<head>
+<style type="text/css">
+body { font-family: sans-serif; }
+.thing {display:none}
+</style>
+</head>
+<body style="background-color:black;color:white">
+%%above%%
+
+%%imgs%%
+
+
+<h1>Keypress Instructions:</h1>
+
+You use the keyboard to navigate and flip through the images.  The keys are mapped to the dimensions as follows:
+
+<ul>
+%%inst%%
+</ul>
+
+<script>
+var cur = 0;
+var n = document.querySelectorAll(".thing").length;
+%%vars%% 
+
+function prev() {
+    cur -= 1;
+    if (cur < 0) cur = 0;
+    show();
+}
+function next() {
+    cur += 1;
+    if (cur >= n) cur = n-1;
+    show();
+}
+function first() {
+    cur=0;show();
+}
+function last() {
+    cur=n-1;show();
+}
+function show() {
+    document.querySelectorAll(".thing").forEach((a) => {
+        a.style.display = "none";
+    });
+    let result = '';
+    for (let key in Dims) {
+        result += key + '=' + Dims[key][Di[key]]+',';
+    }
+    document.querySelector('#'+result.replace(/(:|\.|\[|\]|,|=|@)/g, "\\$1")).style.display = "block";
+}
+
+document.onkeydown = function(e) {
+    const key = String.fromCharCode(e.which).toLowerCase();
+    if (Object.keys(inc2idx).includes(key)){
+        k = inc2idx[key];
+        Di[k] = Math.min(Di[k] + 1 , Dims[k].length-1);
+        show();
+    }
+    if (Object.keys(dec2idx).includes(key)){
+        k = dec2idx[key];
+        Di[k] = Math.max(Di[k] - 1 , 0);
+        show();
+    }
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+};
+
+show();
+</script>
+
+</body>
+</html>

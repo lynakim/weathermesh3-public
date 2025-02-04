@@ -1,0 +1,64 @@
+aria2c --dir=/slow/era5 -c -j16 -x16 -i arialist --auto-file-renaming=false
+for i in /dev/sd?; do echo "$i"; sudo smartctl -a $i | grep "194 Temperature"; done
+
+tensorboard:
+tensorboard --logdir=ignored/runs/ --bind_all
+
+rsync -avP deep/ignored/ /fast/ignored/
+while true; do rsync -avP deep/ignored/ /fast/ignored/; sleep 60; done
+
+remove old boot snapshots: zfs list -H -r -t snapshot -o name,used,referenced,creation bpool/BOOT | head -n 10 | cut -c 35-40 | xargs -n 1 sudo zsysctl state remove --system
+
+check status with "zfs list":
+
+sudo ./mlnxofedinstall --with-nfsrdma --without-dkms --add-kernel-support --kernel 6.2.0-34-generic
+maybe do it without the dkms stuff first
+
+modprobe xprtrdma ?
+
+modprobe svcrdma <- on the server?
+
+echo rdma 20049 > /proc/fs/nfsd/portlist
+sudo ifconfig ibp129s0f0 up
+
+sudo ifconfig ibp129s0f0 10.0.0.50/24
+
+mlxconfig -d /dev/mst/mt4119_pciconf0 reset <---------- reset configuration maybe?
+
+sudo fuser -k /dev/nvidia0
+
+export OMP_NUM_THREADS=8 ; torchrun --nproc_per_node=2 runs/Oct7.py Oct10-fullhopium-0.25-down -N
+
+sudo mount -o remount,size=8G /dev/shm
+sudo lspci -vv | grep -i -E "controller: NVID|controller: mellanox|LnkSta:"
+
+https://askubuntu.com/questions/1382986/zfs-bpool-is-almost-full-how-can-i-free-up-space-so-i-can-keep-updating-my-syst
+
+sudo mlxconfig -d mlx5_0 s LINK_TYPE_P1=1 LINK_TYPE_P2=1 <- configure as infiniband
+
+random unknown:  sudo mlxlink -d mlx5_0 --speeds 200G / sudo ibstat / sudo ibnetdiscover
+
+sudo mget_temp -d mlx5_0
+
+maybe try: https://askubuntu.com/questions/771899/pcie-bus-error-severity-corrected
+
+sudo /opt/conda/bin/tensorboard --logdir=/fast/ignored/runs/ --bind_all --port 80
+
+/fast/runcmd.sh "bash /fast/wbjoan6/deep/system/print_versions.sh"
+
+echo 150 > /proc/sys/vm/vfs_cache_pressure ?????? experimental
+
+sudo find . -mindepth 1 -mmin +1440 -delete <----- delete files older than 24h in one folder (e.g. /dev/shm)
+
+while true; do echo 1 > /proc/sys/vm/compact_memory; echo 1 > /proc/sys/vm/drop_caches; sleep 120; done
+
+while true; do python3 get_freeens.py > freeens && aria2c --dir=/slow/ens_free -j16 -x16 -i freeens ; sleep 21600; done
+
+# download weatherbench
+gsutil -m cp -r gs://weatherbench2/results/1440x721/deterministic /fast/weatherbench2_results/
+
+
+
+pip3 install https://download.pytorch.org/whl/nightly/pytorch_triton-2.2.0%2Be28a256d71-cp310-cp310-linux_x86_64.whl
+pip3 install https://download.pytorch.org/whl/nightly/cu121/torch-2.3.0.dev20240110%2Bcu121-cp310-cp310-linux_x86_64.whl
+pip3 install https://download.pytorch.org/whl/nightly/cu121/torchvision-0.18.0.dev20240110%2Bcu121-cp310-cp310-linux_x86_64.whl

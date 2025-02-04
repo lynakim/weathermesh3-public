@@ -1,0 +1,44 @@
+# matplotlib style sheet compliant with WindBorne branding guidelines
+
+# Color cycle
+#axes.prop_cycle: cycler('color', ["#EDAF4B", "#33A26C", "#0C2C67", "#50BEDF", "#7E5B1B", "#072E39"])
+axes.prop_cycle: cycler('color', ["#50BEDF", "#EDAF4B", "#33A26C", "#7E5B1B", "#072E39", "#0C2C67",
+                                  "#17667D", "#BE7D13", "#277C53", "#543C12", "#031217", "#071A3B"]) # darker shades
+
+# Background color
+figure.facecolor: E3E8E4
+axes.facecolor: E3E8E4
+
+# Gridline color
+grid.color: 222222
+grid.linestyle: -
+
+# Font settings
+font.family: sans-serif     # Font family (e.g., sans-serif, serif, monospace)
+font.sans-serif: DejaVu Sans  # Preferred sans-serif fonts; DejaVu is installed by default
+font.monospace: DejaVu Sans Mono
+font.size: 12
+
+# Title and legend font
+axes.titlesize: 16
+axes.titleweight: bold
+axes.labelweight: normal
+axes.labelsize: 12
+legend.fontsize: 12
+
+# Line thickness
+lines.linewidth: 3
+
+# Other grid and axis options
+axes.grid: True
+axes.edgecolor: 222222
+axes.linewidth: 1
+
+# Tick font settings
+# sadly can't set fonts here it seems, do this in the code:
+# ax.tick_params(axis='x', labelfontfamily='monospace')
+# ax.tick_params(axis='y', labelfontfamily='monospace')
+xtick.labelsize: 10
+ytick.labelsize: 10
+xtick.color: 222222
+ytick.color: 222222
